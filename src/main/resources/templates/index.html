@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Dashboard')}"></head>
+<body>
+
+  <!-- Navigation -->
+  <header th:replace="~{fragments/layout :: navbar('dashboard')}"></header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+
+    <!-- Flash Alerts -->
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="page-title">
+        <h2>Insurance Overview Dashboard</h2>
+        <p>Real-time renewal tracking, policy lifecycle derivation, and automated alerts</p>
+      </div>
+      <div>
+        <a th:href="@{/policies/new}" class="btn btn-primary">➕ Register New Policy</a>
+      </div>
+    </div>
+
+    <!-- KPI Metric Cards (FR-12, BR-06) -->
+    <div class="stat-grid">
+      <div class="stat-card stat-total">
+        <div class="stat-header">
+          <span>Total Policies</span>
+          <span>📁</span>
+        </div>
+        <div class="stat-value" th:text="${stats.total}">0</div>
+        <div class="stat-subtext">Registered in database</div>
+      </div>
+
+      <div class="stat-card stat-active">
+        <div class="stat-header">
+          <span>Active</span>
+          <span>✅</span>
+        </div>
+        <div class="stat-value" th:text="${stats.active}">0</div>
+        <div class="stat-subtext">Beyond renewal window</div>
+      </div>
+
+      <div class="stat-card stat-expiring">
+        <div class="stat-header">
+          <span>Expiring Soon</span>
+          <span>⚠️</span>
+        </div>
+        <div class="stat-value" th:text="${stats.expiringSoon}">0</div>
+        <div class="stat-subtext" th:text="'Within next ' + ${alertDays} + ' days'">Within next 30 days</div>
+      </div>
+
+      <div class="stat-card stat-expired">
+        <div class="stat-header">
+          <span>Expired</span>
+          <span>❌</span>
+        </div>
+        <div class="stat-value" th:text="${stats.expired}">0</div>
+        <div class="stat-subtext">Past expiry date</div>
+      </div>
+
+      <div class="stat-card stat-renewed">
+        <div class="stat-header">
+          <span>Renewed</span>
+          <span>🔄</span>
+        </div>
+        <div class="stat-value" th:text="${stats.renewed}">0</div>
+        <div class="stat-subtext">Explicitly renewed</div>
+      </div>
+    </div>
+
+    <!-- Upcoming Renewals Section -->
+    <div class="card">
+      <div class="card-header">
+        <h3 th:text="'⚠️ Critical Renewals Attention (Next ' + ${alertDays} + ' Days)'">Critical Renewals Attention</h3>
+        <a th:href="@{/policies/upcoming}" class="btn btn-outline btn-sm">View All Upcoming &rarr;</a>
+      </div>
+      <div class="card-body" style="padding: 0;">
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Policy No</th>
+                <th>Customer Name</th>
+                <th>Type</th>
+                <th>Expiry Date</th>
+                <th>Premium</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:if="${#lists.isEmpty(upcomingRenewals)}">
+                <td colspan="7" style="text-align: center; color: var(--color-slate-400); padding: 2rem;">
+                  🎉 No policies currently expiring within the next <span th:text="${alertDays}">30</span> days!
+                </td>
+              </tr>
+              <tr th:each="policy : ${upcomingRenewals}">
+                <td>
+                  <strong th:text="${policy.policyNumber}">POL-001</strong>
+                </td>
+                <td th:text="${policy.customerName}">Customer Name</td>
+                <td>
+                  <span class="tag-type" th:text="${policy.policyType}">Health</span>
+                </td>
+                <td>
+                  <span style="font-weight: 600; color: #b45309;" th:text="${policy.expiryDate}">2026-10-25</span>
+                </td>
+                <td th:text="'₹ ' + ${#numbers.formatDecimal(policy.premiumAmount, 1, 'COMMA', 2, 'POINT')}">₹ 5,000.00</td>
+                <td>
+                  <span class="badge badge-expiring">EXPIRING SOON</span>
+                </td>
+                <td>
+                  <div style="display: flex; gap: 0.5rem;">
+                    <a th:href="@{'/policies/' + ${policy.id}}" class="btn btn-outline btn-sm">View</a>
+                    <form th:action="@{'/policies/' + ${policy.id} + '/renew'}" method="post" style="display:inline;">
+                      <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Confirm renewal of this policy?');">Renew</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Policies Section -->
+    <div class="card">
+      <div class="card-header">
+        <h3>📋 Recent Policies Directory</h3>
+        <a th:href="@{/policies}" class="btn btn-outline btn-sm">View All Policies &rarr;</a>
+      </div>
+      <div class="card-body" style="padding: 0;">
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Policy No</th>
+                <th>Customer Name</th>
+                <th>Type</th>
+                <th>Start Date</th>
+                <th>Expiry Date</th>
+                <th>Derived Status</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:if="${#lists.isEmpty(recentPolicies)}">
+                <td colspan="7" style="text-align: center; color: var(--color-slate-400); padding: 2rem;">
+                  No policies found in the database.
+                </td>
+              </tr>
+              <tr th:each="policy : ${recentPolicies}">
+                <td>
+                  <a th:href="@{'/policies/' + ${policy.id}}" style="font-weight: 700;" th:text="${policy.policyNumber}">POL-001</a>
+                </td>
+                <td th:text="${policy.customerName}">Customer</td>
+                <td>
+                  <span class="tag-type" th:text="${policy.policyType}">Life</span>
+                </td>
+                <td th:text="${policy.startDate}">2025-01-01</td>
+                <td th:text="${policy.expiryDate}">2026-12-31</td>
+                <td>
+                  <span th:with="status=${policyService.getDerivedStatus(policy)}"
+                        th:class="'badge ' + (${status == 'ACTIVE' ? 'badge-active' : (status == 'EXPIRING_SOON' ? 'badge-expiring' : (status == 'EXPIRED' ? 'badge-expired' : 'badge-renewed'))})"
+                        th:text="${status}">
+                    ACTIVE
+                  </span>
+                </td>
+                <td>
+                  <a th:href="@{'/policies/' + ${policy.id}}" class="btn btn-outline btn-sm">Inspect</a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer th:replace="~{fragments/layout :: footer}"></footer>
+
+</body>
+</html>

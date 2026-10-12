@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Page Not Found')}"></head>
+<body>
+
+  <!-- Navigation -->
+  <header th:replace="~{fragments/layout :: navbar('none')}"></header>
+
+  <main class="main-content" style="text-align: center; padding: 4rem 1.5rem;">
+    <div style="font-size: 4rem; margin-bottom: 1rem;">🔍</div>
+    <h2 style="font-size: 2.25rem; font-weight: 800; color: var(--color-dark); margin-bottom: 0.5rem;">404 — Policy or Resource Not Found</h2>
+    <p style="color: var(--color-slate-500); max-width: 500px; margin: 0 auto 2rem; font-size: 1.05rem;">
+      The insurance policy record or URL you were looking for does not exist or may have been relocated.
+    </p>
+    <div style="display: flex; gap: 1rem; justify-content: center;">
+      <a th:href="@{/}" class="btn btn-primary">Return to Dashboard</a>
+      <a th:href="@{/policies}" class="btn btn-outline">Browse Policies</a>
+    </div>
+  </main>
+
+  <footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

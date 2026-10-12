@@ -1,0 +1,32 @@
+# ==============================================================================
+# Jenkins-Based Policy Renewal Reminder System
+# .gitignore Configuration
+# ==============================================================================
+
+# Compiled class files & build directories
+target/
+*.class
+
+# IDE & Editor settings
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+*.ipr
+*.iws
+
+# Logs
+*.log
+logs/
+
+# Local archives / tools binaries
+jdk-*/
+*maven*/
+*.zip
+*.tar.gz
+
+# OS specific files
+.DS_Store
+Thumbs.db

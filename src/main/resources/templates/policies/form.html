@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${isEdit} ? 'Edit Policy' : 'Create Policy')}"></head>
+<body>
+
+  <!-- Navigation -->
+  <header th:replace="~{fragments/layout :: navbar('policies')}"></header>
+
+  <main class="main-content">
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+
+    <div class="page-header">
+      <div class="page-title">
+        <h2 th:text="${isEdit} ? 'Edit Policy — ' + ${policy.policyNumber} : 'Register New Insurance Policy'">Register Policy</h2>
+        <p th:text="${isEdit} ? 'Update existing policy details and schedule' : 'Fill in the insurance agreement parameters below'"></p>
+      </div>
+      <div>
+        <a th:href="${isEdit} ? @{'/policies/' + ${policy.id}} : @{/policies}" class="btn btn-outline">&larr; Back</a>
+      </div>
+    </div>
+
+    <!-- Form Card -->
+    <div class="card" style="max-width: 800px; margin: 0 auto 2rem;">
+      <div class="card-header">
+        <h3 th:text="${isEdit} ? '✏️ Modify Policy Information' : '📝 Policy Enrollment Form'">Policy Form</h3>
+      </div>
+      <div class="card-body">
+
+        <!-- Error Alert if any -->
+        <div th:if="${errorMessage}" class="alert alert-danger">
+          <span th:text="${errorMessage}">Validation Error occurred</span>
+        </div>
+
+        <form th:action="${isEdit} ? @{'/policies/' + ${policy.id}} : @{/policies}" 
+              th:object="${policy}" 
+              method="post" novalidate>
+
+          <div class="form-grid">
+
+            <!-- Policy Number -->
+            <div class="form-group">
+              <label for="policyNumber" class="form-label">
+                Policy Number <span class="required">*</span>
+              </label>
+              <input type="text" id="policyNumber" th:field="*{policyNumber}" 
+                     class="form-control" th:classappend="${#fields.hasErrors('policyNumber')} ? 'is-invalid' : ''"
+                     placeholder="e.g. POL-1042">
+              <div class="form-feedback" th:if="${#fields.hasErrors('policyNumber')}" th:errors="*{policyNumber}"></div>
+            </div>
+
+            <!-- Policy Type -->
+            <div class="form-group">
+              <label for="policyType" class="form-label">
+                Policy Type <span class="required">*</span>
+              </label>
+              <select id="policyType" th:field="*{policyType}" 
+                      class="form-control" th:classappend="${#fields.hasErrors('policyType')} ? 'is-invalid' : ''">
+                <option value="">-- Select Policy Type --</option>
+                <option value="Health">Health Insurance</option>
+                <option value="Life">Life Insurance</option>
+                <option value="Vehicle">Vehicle / Auto Insurance</option>
+                <option value="Home">Home & Property</option>
+                <option value="Travel">Travel Shield</option>
+              </select>
+              <div class="form-feedback" th:if="${#fields.hasErrors('policyType')}" th:errors="*{policyType}"></div>
+            </div>
+
+            <!-- Customer Name -->
+            <div class="form-group">
+              <label for="customerName" class="form-label">
+                Customer Full Name <span class="required">*</span>
+              </label>
+              <input type="text" id="customerName" th:field="*{customerName}" 
+                     class="form-control" th:classappend="${#fields.hasErrors('customerName')} ? 'is-invalid' : ''"
+                     placeholder="e.g. Rohan Deshmukh">
+              <div class="form-feedback" th:if="${#fields.hasErrors('customerName')}" th:errors="*{customerName}"></div>
+            </div>
+
+            <!-- Customer Email -->
+            <div class="form-group">
+              <label for="customerEmail" class="form-label">
+                Customer Email Address
+              </label>
+              <input type="email" id="customerEmail" th:field="*{customerEmail}" 
+                     class="form-control" th:classappend="${#fields.hasErrors('customerEmail')} ? 'is-invalid' : ''"
+                     placeholder="e.g. rohan.d@example.com">
+              <div class="form-feedback" th:if="${#fields.hasErrors('customerEmail')}" th:errors="*{customerEmail}"></div>
+            </div>
+
+            <!-- Start Date -->
+            <div class="form-group">
+              <label for="startDate" class="form-label">
+                Start Date <span class="required">*</span>
+              </label>
+              <input type="date" id="startDate" th:field="*{startDate}" 
+                     class="form-control" th:classappend="${#fields.hasErrors('startDate')} ? 'is-invalid' : ''">
+              <div class="form-feedback" th:if="${#fields.hasErrors('startDate')}" th:errors="*{startDate}"></div>
+            </div>
+
+            <!-- Expiry Date -->
+            <div class="form-group">
+              <label for="expiryDate" class="form-label">
+                Expiry Date <span class="required">*</span>
+              </label>
+              <input type="date" id="expiryDate" th:field="*{expiryDate}" 
+                     class="form-control" th:classappend="${#fields.hasErrors('expiryDate')} ? 'is-invalid' : ''">
+              <div class="form-feedback" th:if="${#fields.hasErrors('expiryDate')}" th:errors="*{expiryDate}"></div>
+            </div>
+
+            <!-- Premium Amount -->
+            <div class="form-group">
+              <label for="premiumAmount" class="form-label">
+                Annual Premium Amount (₹) <span class="required">*</span>
+              </label>
+              <input type="number" step="0.01" min="0" id="premiumAmount" th:field="*{premiumAmount}" 
+                     class="form-control" th:classappend="${#fields.hasErrors('premiumAmount')} ? 'is-invalid' : ''"
+                     placeholder="e.g. 5200.00">
+              <div class="form-feedback" th:if="${#fields.hasErrors('premiumAmount')}" th:errors="*{premiumAmount}"></div>
+            </div>
+
+            <!-- Renewal Status (Read-only if edit) -->
+            <div class="form-group" th:if="${isEdit}">
+              <label class="form-label">Stored Renewal Status</label>
+              <input type="text" class="form-control" 
+                     th:value="${policy.renewalStatus != null ? policy.renewalStatus : 'NONE (Runtime Derived)'}" 
+                     readonly style="background-color: var(--color-slate-100); color: var(--color-slate-600);">
+            </div>
+
+            <!-- Notes -->
+            <div class="form-group form-group-full">
+              <label for="notes" class="form-label">Administrative Notes & Remarks</label>
+              <textarea id="notes" th:field="*{notes}" rows="3" 
+                        class="form-control" th:classappend="${#fields.hasErrors('notes')} ? 'is-invalid' : ''"
+                        placeholder="Add agent notes, customer preferences, or policy rider conditions..."></textarea>
+              <div class="form-feedback" th:if="${#fields.hasErrors('notes')}" th:errors="*{notes}"></div>
+            </div>
+
+          </div>
+
+          <!-- Actions -->
+          <div class="form-actions">
+            <a th:href="${isEdit} ? @{'/policies/' + ${policy.id}} : @{/policies}" class="btn btn-outline">Cancel</a>
+            <button type="submit" class="btn btn-primary" th:text="${isEdit} ? 'Update Policy' : 'Save Policy'">
+              Submit
+            </button>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

@@ -1,0 +1,63 @@
+graph TB
+    subgraph Browser["🌐 Browser (User's Computer)"]
+        UI[HTML Pages\nThymeleaf Rendered]
+    end
+
+    subgraph SpringBoot["☕ Spring Boot Application (localhost:8080)"]
+        subgraph Presentation["📄 Presentation Layer\n(Thymeleaf Templates)"]
+            T1[index.html\nDashboard]
+            T2[list.html\nPolicy List]
+            T3[form.html\nAdd / Edit Policy]
+            T4[detail.html\nPolicy Details]
+        end
+
+        subgraph Controller["🎮 Controller Layer\n(Spring MVC)"]
+            HC[HomeController]
+            PC[PolicyController]
+        end
+
+        subgraph Service["⚙️ Service Layer\n(Business Logic)"]
+            PS[PolicyService\nStatus Classification\nValidation Logic\nSearch Logic]
+        end
+
+        subgraph Repository["🗄️ Repository Layer\n(Spring Data JPA)"]
+            PR[PolicyRepository\nfindAll\nfindById\nfindByCustomerName\nfindUpcoming\nsave]
+        end
+
+        subgraph Model["📦 Model / Entity Layer"]
+            PE[Policy.java\nJPA Entity]
+        end
+    end
+
+    subgraph Database["💾 Database Layer"]
+        H2[(H2 In-Memory DB\nPOLICY table)]
+    end
+
+    UI -->|HTTP Request| HC
+    UI -->|HTTP Request| PC
+    HC -->|calls| PS
+    PC -->|calls| PS
+    PS -->|calls| PR
+    PR -->|uses| PE
+    PR -->|SQL via JPA| H2
+    H2 -->|ResultSet| PR
+    PR -->|List of Policy| PS
+    PS -->|enriched data| HC
+    PS -->|enriched data| PC
+    HC -->|Model + View name| T1
+    PC -->|Model + View name| T2
+    PC -->|Model + View name| T3
+    PC -->|Model + View name| T4
+    T1 -->|HTML Response| UI
+    T2 -->|HTML Response| UI
+    T3 -->|HTML Response| UI
+    T4 -->|HTML Response| UI
+
+    style Browser fill:#E8F4FD,stroke:#2196F3
+    style SpringBoot fill:#E8F5E9,stroke:#4CAF50
+    style Presentation fill:#FFF3E0,stroke:#FF9800
+    style Controller fill:#F3E5F5,stroke:#9C27B0
+    style Service fill:#E0F2F1,stroke:#009688
+    style Repository fill:#FFF8E1,stroke:#FFC107
+    style Model fill:#FCE4EC,stroke:#E91E63
+    style Database fill:#E3F2FD,stroke:#1976D2

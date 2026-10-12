@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(title)">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="${title} + ' — Policy Renewal Reminder System'">Policy Renewal Reminder System</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+  <!-- Shared Header & Navigation -->
+  <header class="navbar" th:fragment="navbar(activeTab)">
+    <div class="nav-container">
+      <a th:href="@{/}" class="brand-wrapper">
+        <div class="brand-icon">🛡️</div>
+        <div class="brand-text">
+          <h1>PolicyGuard</h1>
+          <span>Renewal Reminder System</span>
+        </div>
+      </a>
+      <nav>
+        <ul class="nav-links">
+          <li>
+            <a th:href="@{/}" th:classappend="${activeTab == 'dashboard' ? 'active' : ''}" class="nav-link">
+              📊 Dashboard
+            </a>
+          </li>
+          <li>
+            <a th:href="@{/policies}" th:classappend="${activeTab == 'policies' ? 'active' : ''}" class="nav-link">
+              📁 All Policies
+            </a>
+          </li>
+          <li>
+            <a th:href="@{/policies/upcoming}" th:classappend="${activeTab == 'upcoming' ? 'active' : ''}" class="nav-link">
+              ⏰ Upcoming Renewals
+            </a>
+          </li>
+          <li>
+            <a th:href="@{/policies/new}" class="nav-link btn-nav-action">
+              ➕ Add Policy
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Shared Flash Messages -->
+  <div th:fragment="alerts">
+    <div th:if="${successMessage}" class="alert alert-success">
+      <span th:text="${successMessage}">Operation completed successfully.</span>
+    </div>
+    <div th:if="${errorMessage}" class="alert alert-danger">
+      <span th:text="${errorMessage}">An error occurred.</span>
+    </div>
+  </div>
+
+  <!-- Shared Footer -->
+  <footer class="footer" th:fragment="footer">
+    <div class="footer-content">
+      <div>
+        <strong>Jenkins-Based Policy Renewal Reminder System</strong> &bull; Final Year Engineering Project
+      </div>
+      <div>
+        Developed by <strong>Basil Shaikh</strong> (23102C0026 &bull; CMPN C)
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

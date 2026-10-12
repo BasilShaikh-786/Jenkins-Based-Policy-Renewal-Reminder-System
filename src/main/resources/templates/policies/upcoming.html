@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Upcoming Renewals')}"></head>
+<body>
+
+  <!-- Navigation -->
+  <header th:replace="~{fragments/layout :: navbar('upcoming')}"></header>
+
+  <main class="main-content">
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+
+    <div class="page-header">
+      <div class="page-title">
+        <h2 th:text="'Upcoming Renewals (Next ' + ${alertDays} + ' Days)'">Upcoming Renewals</h2>
+        <p>Prioritized action queue for insurance policies requiring imminent renewal dispatch</p>
+      </div>
+      <div>
+        <a th:href="@{/policies/new}" class="btn btn-primary">➕ Add Policy</a>
+      </div>
+    </div>
+
+    <!-- Info banner explaining the automated Jenkins workflow integration -->
+    <div class="alert alert-info">
+      <div>
+        <strong>DevOps Automation Notice:</strong> In upcoming milestones (Weeks 7–8), Jenkins scheduled cron jobs will query this queue daily and automatically dispatch personalized email renewal notices to policyholders.
+      </div>
+    </div>
+
+    <!-- Upcoming Policies Table -->
+    <div class="card">
+      <div class="card-header">
+        <h3 th:text="${#lists.size(upcomingPolicies)} + ' Policies Expiring Soon'">Expiring Soon</h3>
+      </div>
+      <div class="card-body" style="padding: 0;">
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Policy No</th>
+                <th>Customer Name</th>
+                <th>Customer Email</th>
+                <th>Type</th>
+                <th>Expiry Date</th>
+                <th>Premium</th>
+                <th>Derived Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:if="${#lists.isEmpty(upcomingPolicies)}">
+                <td colspan="8" style="text-align: center; color: var(--color-slate-400); padding: 3rem;">
+                  🎉 No policies currently pending renewal within the configured <span th:text="${alertDays}">30</span>-day threshold.
+                </td>
+              </tr>
+              <tr th:each="policy : ${upcomingPolicies}">
+                <td>
+                  <a th:href="@{'/policies/' + ${policy.id}}" style="font-weight: 700;" th:text="${policy.policyNumber}">POL-1001</a>
+                </td>
+                <td th:text="${policy.customerName}">Customer Name</td>
+                <td style="font-size: 0.85rem; color: var(--color-slate-500);" th:text="${policy.customerEmail != null ? policy.customerEmail : '—'}">email@example.com</td>
+                <td>
+                  <span class="tag-type" th:text="${policy.policyType}">Vehicle</span>
+                </td>
+                <td>
+                  <strong style="color: #b45309;" th:text="${policy.expiryDate}">2026-10-25</strong>
+                </td>
+                <td style="font-weight: 600;" th:text="'₹ ' + ${#numbers.formatDecimal(policy.premiumAmount, 1, 'COMMA', 2, 'POINT')}">₹ 4,200.00</td>
+                <td>
+                  <span class="badge badge-expiring">EXPIRING SOON</span>
+                </td>
+                <td>
+                  <div style="display: flex; gap: 0.4rem;">
+                    <a th:href="@{'/policies/' + ${policy.id}}" class="btn btn-outline btn-sm">View</a>
+                    <form th:action="@{'/policies/' + ${policy.id} + '/renew'}" method="post" style="display:inline;">
+                      <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Confirm renewal of this policy?');">Renew</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

@@ -1,0 +1,15 @@
+erDiagram
+    POLICY {
+        BIGINT id PK "Auto-generated primary key"
+        VARCHAR_50 policyNumber UK "Unique business key (NOT NULL)"
+        VARCHAR_150 customerName "Policyholder full name (NOT NULL)"
+        VARCHAR_200 customerEmail "Optional email address"
+        VARCHAR_50 policyType "Health, Life, Vehicle, Home, Travel (NOT NULL)"
+        DATE startDate "Coverage start date (NOT NULL)"
+        DATE expiryDate "Coverage expiry date (NOT NULL, >= startDate)"
+        DECIMAL_10_2 premiumAmount "Annual premium >= 0 (NOT NULL)"
+        VARCHAR_20 renewalStatus "Stored only if RENEWED; derived otherwise"
+        VARCHAR_500 notes "Optional free-text notes by agent"
+        TIMESTAMP createdAt "Set once at creation (NOT NULL)"
+        TIMESTAMP updatedAt "Updated on every save (NOT NULL)"
+    }

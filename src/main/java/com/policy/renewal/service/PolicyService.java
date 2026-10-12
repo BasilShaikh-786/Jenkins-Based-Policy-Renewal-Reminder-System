@@ -1,0 +1,283 @@
+package com.policy.renewal.service;
+
+import com.policy.renewal.model.Policy;
+import com.policy.renewal.repository.PolicyRepository;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+/**
+ * PolicyService — all business logic for the Policy Renewal Reminder System.
+ *
+ * <p>This service class is the heart of the application. All business rules defined
+ * in the SRS (Business Rules BR-01 through BR-07) are enforced here. The controller
+ * layer calls this service; the controller itself contains no business logic.
+ *
+ * <p>Key responsibilities:
+ * <ul>
+ *   <li>Saving and retrieving policy records (via the repository)</li>
+ *   <li>Enforcing the duplicate policy number rule (BR-01)</li>
+ *   <li>Enforcing the date order rule (BR-04)</li>
+ *   <li>Deriving renewal status from dates (BR-03)</li>
+ *   <li>Computing dashboard statistics (BR-06)</li>
+ *   <li>Finding upcoming renewals (FR-09)</li>
+ * </ul>
+ *
+ * <p>Project: Jenkins-Based Policy Renewal Reminder System
+ * <p>Student: Basil Shaikh | Roll No: 23102C0026 | CMPN C
+ */
+@Service
+@Transactional
+public class PolicyService {
+
+    // =========================================================================
+    // Constants for derived statuses (used as display labels)
+    // =========================================================================
+
+    public static final String STATUS_RENEWED       = "RENEWED";
+    public static final String STATUS_EXPIRED       = "EXPIRED";
+    public static final String STATUS_EXPIRING_SOON = "EXPIRING_SOON";
+    public static final String STATUS_ACTIVE        = "ACTIVE";
+
+    // =========================================================================
+    // Dependencies
+    // =========================================================================
+
+    private final PolicyRepository policyRepository;
+
+    /**
+     * Alert window: number of days before expiry at which a policy is considered
+     * "Expiring Soon". Configured via application.properties (renewal.alert.days).
+     * Defaults to 30 if not configured.
+     */
+    @Value("${renewal.alert.days:30}")
+    private int renewalAlertDays;
+
+    /**
+     * Constructor injection. Spring automatically provides the PolicyRepository
+     * bean. Constructor injection is preferred over field injection because it
+     * makes dependencies explicit and supports unit testing without Spring.
+     *
+     * @param policyRepository the repository for POLICY database operations
+     */
+    public PolicyService(PolicyRepository policyRepository) {
+        this.policyRepository = policyRepository;
+    }
+
+    // =========================================================================
+    // Read operations
+    // =========================================================================
+
+    /**
+     * Returns all policies sorted by expiry date ascending.
+     * Used by FR-02 (View All Policies).
+     *
+     * @return list of all policies, sorted soonest-expiring first
+     */
+    @Transactional(readOnly = true)
+    public List<Policy> getAllPolicies() {
+        return policyRepository.findAllByOrderByExpiryDateAsc();
+    }
+
+    /**
+     * Returns a single policy by its numeric ID.
+     * Used by FR-03 (View Policy Details) and FR-04 (Edit Policy).
+     *
+     * @param id the primary key of the policy
+     * @return an Optional containing the policy if found, or empty
+     */
+    @Transactional(readOnly = true)
+    public Optional<Policy> findById(Long id) {
+        return policyRepository.findById(id);
+    }
+
+    // =========================================================================
+    // Create and Update operations
+    // =========================================================================
+
+    /**
+     * Saves a new or updated policy to the database.
+     *
+     * <p>Business rules enforced:
+     * <ul>
+     *   <li>BR-04: expiryDate must not be before startDate</li>
+     *   <li>BR-01: policyNumber must be unique (checked before saving)</li>
+     * </ul>
+     *
+     * <p>Note: Field-level validation (@NotBlank, @NotNull, etc.) is enforced by
+     * Spring's bean validation framework before this method is called. This method
+     * enforces cross-field and uniqueness rules.
+     *
+     * @param policy the policy to save
+     * @return the saved policy with its generated ID populated
+     * @throws IllegalArgumentException if a business rule is violated
+     */
+    public Policy save(Policy policy) {
+        // BR-04: date order validation
+        if (policy.getStartDate() != null && policy.getExpiryDate() != null
+                && policy.getExpiryDate().isBefore(policy.getStartDate())) {
+            throw new IllegalArgumentException(
+                    "Expiry date must not be earlier than the start date.");
+        }
+
+        // BR-01: duplicate policy number check
+        // When creating a new policy, id is null. When updating, we exclude the
+        // current record from the uniqueness check (a policy can "keep" its own number).
+        Optional<Policy> existing = policyRepository.findByPolicyNumber(policy.getPolicyNumber());
+        if (existing.isPresent() && !existing.get().getId().equals(policy.getId())) {
+            throw new IllegalArgumentException(
+                    "Policy number '" + policy.getPolicyNumber() + "' is already in use.");
+        }
+
+        return policyRepository.save(policy);
+    }
+
+    /**
+     * Marks an existing policy as Renewed.
+     *
+     * <p>Setting renewalStatus to "RENEWED" means the status derivation algorithm
+     * (BR-03) will always return "Renewed" for this policy, regardless of its
+     * expiry date. This implements FR-11 and prevents the policy from being
+     * incorrectly classified as Expired (NFR-10).
+     *
+     * @param id the ID of the policy to mark as renewed
+     * @throws IllegalArgumentException if no policy with the given ID exists
+     */
+    public void markAsRenewed(Long id) {
+        Policy policy = policyRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Policy not found with ID: " + id));
+        policy.setRenewalStatus(STATUS_RENEWED);
+        policyRepository.save(policy);
+    }
+
+    // =========================================================================
+    // Status derivation — BR-03 (NFR-10: implemented in ONE place only)
+    // =========================================================================
+
+    /**
+     * Derives the display status of a policy based on its stored renewalStatus
+     * field and the relationship between its expiryDate and today's date.
+     *
+     * <p>Algorithm (priority order, as defined in BR-03):
+     * <ol>
+     *   <li>If stored renewalStatus is "RENEWED" → return "RENEWED"</li>
+     *   <li>If expiryDate is before today → return "EXPIRED"</li>
+     *   <li>If expiryDate is within the alert window → return "EXPIRING_SOON"</li>
+     *   <li>Otherwise → return "ACTIVE"</li>
+     * </ol>
+     *
+     * <p>This method is the ONLY place in the codebase where this algorithm lives.
+     * It must not be duplicated in controllers, templates or repositories.
+     *
+     * @param policy the policy whose status is to be derived
+     * @return one of: "RENEWED", "EXPIRED", "EXPIRING_SOON", "ACTIVE"
+     */
+    public String getDerivedStatus(Policy policy) {
+        if (STATUS_RENEWED.equals(policy.getRenewalStatus())) {
+            return STATUS_RENEWED;
+        }
+        LocalDate today = LocalDate.now();
+        if (policy.getExpiryDate().isBefore(today)) {
+            return STATUS_EXPIRED;
+        }
+        LocalDate alertCutoff = today.plusDays(renewalAlertDays);
+        if (!policy.getExpiryDate().isAfter(alertCutoff)) {
+            return STATUS_EXPIRING_SOON;
+        }
+        return STATUS_ACTIVE;
+    }
+
+    // =========================================================================
+    // Upcoming renewals — FR-09
+    // =========================================================================
+
+    /**
+     * Returns policies expiring within the configured alert window that have not
+     * been marked as Renewed.
+     *
+     * @return list of upcoming-renewal policies, sorted by expiry date ascending
+     */
+    @Transactional(readOnly = true)
+    public List<Policy> getUpcomingRenewals() {
+        LocalDate today = LocalDate.now();
+        LocalDate cutoff = today.plusDays(renewalAlertDays);
+        return policyRepository.findUpcomingRenewals(today, cutoff);
+    }
+
+    // =========================================================================
+    // Search — FR-06, FR-07
+    // =========================================================================
+
+    /**
+     * Searches for policies matching the given search term in either customer name
+     * or policy number. The search is case-insensitive and supports partial matches.
+     *
+     * @param searchTerm the text entered by the user
+     * @return list of matching policies; empty list if no matches
+     */
+    @Transactional(readOnly = true)
+    public List<Policy> search(String searchTerm) {
+        if (searchTerm == null || searchTerm.isBlank()) {
+            return getAllPolicies();
+        }
+        // Search both customer name and policy number; merge results without duplicates
+        List<Policy> byName = policyRepository
+                .findByCustomerNameContainingIgnoreCaseOrderByExpiryDateAsc(searchTerm);
+        List<Policy> byNumber = policyRepository
+                .findByPolicyNumberContainingIgnoreCase(searchTerm);
+
+        // Add by-number results that are not already in the by-name results
+        for (Policy p : byNumber) {
+            if (byName.stream().noneMatch(existing -> existing.getId().equals(p.getId()))) {
+                byName.add(p);
+            }
+        }
+        return byName;
+    }
+
+    // =========================================================================
+    // Dashboard statistics — FR-12 (BR-06)
+    // =========================================================================
+
+    /**
+     * Computes dashboard statistics from live database data.
+     * All counts are computed at the moment this method is called; they are never
+     * cached or pre-computed (implementing BR-06).
+     *
+     * @return a map containing: total, active, expiringSoon, expired, renewed
+     */
+    @Transactional(readOnly = true)
+    public Map<String, Long> getDashboardStats() {
+        LocalDate today = LocalDate.now();
+        LocalDate cutoff = today.plusDays(renewalAlertDays);
+
+        Map<String, Long> stats = new HashMap<>();
+        stats.put("total",        policyRepository.count());
+        stats.put("renewed",      policyRepository.countByRenewalStatus(STATUS_RENEWED));
+        stats.put("expired",      policyRepository.countExpired(today));
+        stats.put("expiringSoon", policyRepository.countExpiringSoon(today, cutoff));
+        stats.put("active",       policyRepository.countActive(cutoff));
+        return stats;
+    }
+
+    // =========================================================================
+    // Alert window accessor (useful for display in templates)
+    // =========================================================================
+
+    /**
+     * Returns the configured renewal alert window in days.
+     * Used by templates to display "Upcoming Renewals (Next N Days)".
+     *
+     * @return the alert window in days
+     */
+    public int getRenewalAlertDays() {
+        return renewalAlertDays;
+    }
+}

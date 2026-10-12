@@ -1,0 +1,51 @@
+flowchart TD
+    A([🧠 PLAN\nRequirements, Stories,\nSprint Planning]) --> B
+
+    B([💻 CODE\nJava + Spring Boot\nThymeleaf + H2]) --> C
+
+    C([🔀 VERSION CONTROL\nGit Commit\nFeature Branch]) --> D
+
+    D{Code Review\nPull Request} -->|Approved| E
+    D -->|Changes Needed| B
+
+    E([🔨 BUILD\nJenkins triggers\nmvn clean compile]) --> F{Build OK?}
+
+    F -->|❌ FAIL| FAIL1([🚫 Build FAILED\nNotify Developer\nStop Pipeline])
+    F -->|✅ PASS| G
+
+    G([🧪 UNIT + INTEGRATION TEST\nJUnit + Spring Boot Test\nmvn test]) --> H{Tests Pass?}
+
+    H -->|❌ FAIL| FAIL2([🚫 Test FAILED\nNotify Developer\nStop Pipeline])
+    H -->|✅ PASS| I
+
+    I([📦 PACKAGE\nmvn package\nCreate JAR]) --> J
+
+    J([🚀 DEPLOY\nJenkins deploys JAR\nor Docker Container]) --> K
+
+    K([🌐 BROWSER TEST\nSelenium WebDriver\nEnd-to-End Tests]) --> L{E2E Tests Pass?}
+
+    L -->|❌ FAIL| FAIL3([🚫 E2E FAILED\nRoll Back\nNotify Developer])
+    L -->|✅ PASS| M
+
+    M([✅ VERIFY / MONITOR\nHealth Check\nSpring Boot Actuator]) --> N{Healthy?}
+
+    N -->|❌ FAIL| FAIL4([🔄 RECOVER\nAnsible/Puppet\nRestart or Roll Back])
+    N -->|✅ PASS| O([🎉 DONE\nRelease Successful])
+
+    FAIL4 --> J
+
+    style A fill:#4A90D9,color:#fff
+    style B fill:#5BA85A,color:#fff
+    style C fill:#F5A623,color:#fff
+    style D fill:#9B59B6,color:#fff
+    style E fill:#E74C3C,color:#fff
+    style G fill:#1ABC9C,color:#fff
+    style I fill:#E67E22,color:#fff
+    style J fill:#2ECC71,color:#fff
+    style K fill:#3498DB,color:#fff
+    style M fill:#16A085,color:#fff
+    style O fill:#27AE60,color:#fff
+    style FAIL1 fill:#C0392B,color:#fff
+    style FAIL2 fill:#C0392B,color:#fff
+    style FAIL3 fill:#C0392B,color:#fff
+    style FAIL4 fill:#E67E22,color:#fff
