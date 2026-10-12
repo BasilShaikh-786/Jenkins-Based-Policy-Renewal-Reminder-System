@@ -31,14 +31,14 @@ pipeline {
         stage('Compile') {
             steps {
                 echo "Compiling Spring Boot source code..."
-                sh 'mvn clean compile'
+                bat 'mvn clean compile'
             }
         }
 
         stage('Unit & Integration Tests') {
             steps {
                 echo "Executing JUnit 5 test suite and verifying business rules (BR-01 through BR-07)..."
-                sh 'mvn test'
+                bat 'mvn test'
             }
             post {
                 always {
@@ -51,7 +51,7 @@ pipeline {
         stage('Package') {
             steps {
                 echo "Packaging runnable JAR artifact..."
-                sh 'mvn package -DskipTests'
+                bat 'mvn package -DskipTests'
             }
             post {
                 success {
@@ -63,7 +63,8 @@ pipeline {
 
         stage('DevOps Notification / Reminder Check') {
             steps {
-                echo "Simulating automated policy expiry check and reminder notification trigger..."
+                echo "[SIMULATION] Simulating automated policy expiry check and reminder notification trigger..."
+                echo "[SIMULATION] Notice: No actual emails or renewal reminders are sent at this stage."
                 echo "Pipeline run completed successfully for ${env.PROJECT_NAME} by ${env.STUDENT_NAME}."
             }
         }
