@@ -21,12 +21,18 @@
         <p th:text="'Comprehensive record view for ' + ${policy.customerName}">Policy Details</p>
       </div>
 
-      <div style="display: flex; gap: 0.5rem;">
+      <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
         <a th:href="@{/policies}" class="btn btn-outline">&larr; Directory</a>
         <a th:href="@{'/policies/' + ${policy.id} + '/edit'}" class="btn btn-outline">✏️ Edit</a>
         <form th:if="${policy.renewalStatus != 'RENEWED'}" th:action="@{'/policies/' + ${policy.id} + '/renew'}" method="post" style="display:inline;">
           <button type="submit" class="btn btn-success" onclick="return confirm('Are you sure you want to mark this policy as RENEWED?');">
             🔄 Mark as Renewed
+          </button>
+        </form>
+        <form th:action="@{'/policies/' + ${policy.id} + '/delete'}" method="post" style="display:inline;">
+          <button type="submit" class="btn btn-outline" style="color: #dc2626; border-color: #fecaca;" 
+                  onclick="return confirm('Are you sure you want to permanently delete this policy? This action cannot be undone.');">
+            🗑️ Delete Policy
           </button>
         </form>
       </div>
@@ -103,6 +109,48 @@
              th:text="${policy.notes != null and !policy.notes.isBlank() ? policy.notes : 'No administrative notes recorded for this policy.'}">
             No notes.
           </p>
+        </div>
+
+        <!-- Reminder History Section -->
+        <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--color-slate-200);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h4 style="font-size: 1.05rem; color: var(--color-dark);">🔔 Renewal Reminder Notification History</h4>
+            <span style="font-size: 0.8rem; color: var(--color-slate-500);">Automated audit records for this policy</span>
+          </div>
+
+          <div th:if="${#lists.isEmpty(reminderHistory)}" style="color: var(--color-slate-400); font-size: 0.9rem; font-style: italic;">
+            No reminder notifications recorded for this policy yet.
+          </div>
+
+          <div th:if="${!#lists.isEmpty(reminderHistory)}" class="table-responsive">
+            <table class="data-table" style="font-size: 0.875rem;">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Window</th>
+                  <th>Renewal Cycle</th>
+                  <th>Status</th>
+                  <th>Outcome / Details</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="r : ${reminderHistory}">
+                  <td th:text="${#temporals.format(r.processedAt, 'yyyy-MM-dd HH:mm:ss')}">2026-10-12 08:00:00</td>
+                  <td><span class="tag-type" th:text="${r.reminderWindow} + ' Days'">30 Days</span></td>
+                  <td th:text="${r.policyExpiryDate}">2026-10-25</td>
+                  <td>
+                    <span th:if="${r.status == 'SIMULATED'}" class="badge badge-simulated">SIMULATED</span>
+                    <span th:if="${r.status == 'SENT'}" class="badge badge-sent">SENT</span>
+                    <span th:if="${r.status == 'FAILED'}" class="badge badge-failed">FAILED</span>
+                  </td>
+                  <td style="max-width: 350px; word-break: break-word;">
+                    <span th:if="${r.errorMessage != null}" style="color: #dc2626;" th:text="${r.errorMessage}"></span>
+                    <span th:if="${r.errorMessage == null}" th:text="${r.notes}">Simulated reminder</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
 
       </div>

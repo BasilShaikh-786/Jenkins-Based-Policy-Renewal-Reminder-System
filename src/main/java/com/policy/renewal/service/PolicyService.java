@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
@@ -50,6 +51,7 @@ public class PolicyService {
     // =========================================================================
 
     private final PolicyRepository policyRepository;
+    private Clock clock = Clock.systemDefaultZone();
 
     /**
      * Alert window: number of days before expiry at which a policy is considered
@@ -60,14 +62,30 @@ public class PolicyService {
     private int renewalAlertDays;
 
     /**
-     * Constructor injection. Spring automatically provides the PolicyRepository
-     * bean. Constructor injection is preferred over field injection because it
-     * makes dependencies explicit and supports unit testing without Spring.
+     * Single-argument constructor for backwards compatibility and standalone testing.
      *
      * @param policyRepository the repository for POLICY database operations
      */
     public PolicyService(PolicyRepository policyRepository) {
+        this(policyRepository, Clock.systemDefaultZone());
+    }
+
+    /**
+     * Full constructor injection with Clock bean for deterministic, testable date handling.
+     *
+     * @param policyRepository the repository for POLICY database operations
+     * @param clock the clock instance to determine current time
+     */
+    @org.springframework.beans.factory.annotation.Autowired
+    public PolicyService(PolicyRepository policyRepository, Clock clock) {
         this.policyRepository = policyRepository;
+        this.clock = clock != null ? clock : Clock.systemDefaultZone();
+    }
+
+    public void setClock(Clock clock) {
+        if (clock != null) {
+            this.clock = clock;
+        }
     }
 
     // =========================================================================
@@ -157,6 +175,19 @@ public class PolicyService {
         policyRepository.save(policy);
     }
 
+    /**
+     * Deletes a policy by its numeric ID.
+     *
+     * @param id the primary key ID of the policy to delete
+     * @throws IllegalArgumentException if no policy with the given ID exists
+     */
+    public void deleteById(Long id) {
+        Policy policy = policyRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Policy not found with ID: " + id));
+        policyRepository.delete(policy);
+    }
+
     // =========================================================================
     // Status derivation — BR-03 (NFR-10: implemented in ONE place only)
     // =========================================================================
@@ -180,10 +211,16 @@ public class PolicyService {
      * @return one of: "RENEWED", "EXPIRED", "EXPIRING_SOON", "ACTIVE"
      */
     public String getDerivedStatus(Policy policy) {
+        if (policy == null) {
+            return STATUS_ACTIVE;
+        }
         if (STATUS_RENEWED.equals(policy.getRenewalStatus())) {
             return STATUS_RENEWED;
         }
-        LocalDate today = LocalDate.now();
+        if (policy.getExpiryDate() == null) {
+            return STATUS_ACTIVE;
+        }
+        LocalDate today = LocalDate.now(clock);
         if (policy.getExpiryDate().isBefore(today)) {
             return STATUS_EXPIRED;
         }
@@ -206,18 +243,30 @@ public class PolicyService {
      */
     @Transactional(readOnly = true)
     public List<Policy> getUpcomingRenewals() {
-        LocalDate today = LocalDate.now();
-        LocalDate cutoff = today.plusDays(renewalAlertDays);
+        return getUpcomingRenewals(renewalAlertDays);
+    }
+
+    /**
+     * Returns policies expiring within the specified days window that have not
+     * been marked as Renewed.
+     *
+     * @param days number of days ahead to search
+     * @return list of upcoming-renewal policies, sorted by expiry date ascending
+     */
+    @Transactional(readOnly = true)
+    public List<Policy> getUpcomingRenewals(int days) {
+        LocalDate today = LocalDate.now(clock);
+        LocalDate cutoff = today.plusDays(days);
         return policyRepository.findUpcomingRenewals(today, cutoff);
     }
 
     // =========================================================================
-    // Search — FR-06, FR-07
+    // Search & Filter — FR-06, FR-07, FR-08
     // =========================================================================
 
     /**
-     * Searches for policies matching the given search term in either customer name
-     * or policy number. The search is case-insensitive and supports partial matches.
+     * Searches for policies matching the given search term in customer name,
+     * policy number, or customer email. The search is case-insensitive and partial.
      *
      * @param searchTerm the text entered by the user
      * @return list of matching policies; empty list if no matches
@@ -227,19 +276,57 @@ public class PolicyService {
         if (searchTerm == null || searchTerm.isBlank()) {
             return getAllPolicies();
         }
-        // Search both customer name and policy number; merge results without duplicates
+        // Search customer name, policy number, and customer email
         List<Policy> byName = policyRepository
-                .findByCustomerNameContainingIgnoreCaseOrderByExpiryDateAsc(searchTerm);
+                .findByCustomerNameContainingIgnoreCaseOrderByExpiryDateAsc(searchTerm.trim());
         List<Policy> byNumber = policyRepository
-                .findByPolicyNumberContainingIgnoreCase(searchTerm);
+                .findByPolicyNumberContainingIgnoreCase(searchTerm.trim());
+        List<Policy> byEmail = policyRepository
+                .findByCustomerEmailContainingIgnoreCase(searchTerm.trim());
 
-        // Add by-number results that are not already in the by-name results
+        // Merge results without duplicates
         for (Policy p : byNumber) {
             if (byName.stream().noneMatch(existing -> existing.getId().equals(p.getId()))) {
                 byName.add(p);
             }
         }
+        for (Policy p : byEmail) {
+            if (byName.stream().noneMatch(existing -> existing.getId().equals(p.getId()))) {
+                byName.add(p);
+            }
+        }
         return byName;
+    }
+
+    /**
+     * Filters a list of policies by derived status and expiry date range.
+     *
+     * @param policies   input list of policies
+     * @param status     derived status filter (ACTIVE, EXPIRING_SOON, EXPIRED, RENEWED), or null/empty/ALL
+     * @param expiryFrom minimum expiry date (inclusive), or null
+     * @param expiryTo   maximum expiry date (inclusive), or null
+     * @return filtered list of policies
+     */
+    public List<Policy> filterPolicies(List<Policy> policies, String status, LocalDate expiryFrom, LocalDate expiryTo) {
+        if (policies == null) {
+            return List.of();
+        }
+        return policies.stream()
+                .filter(p -> {
+                    if (status != null && !status.isBlank() && !status.equalsIgnoreCase("ALL")) {
+                        if (!getDerivedStatus(p).equalsIgnoreCase(status.trim())) {
+                            return false;
+                        }
+                    }
+                    if (expiryFrom != null && p.getExpiryDate() != null && p.getExpiryDate().isBefore(expiryFrom)) {
+                        return false;
+                    }
+                    if (expiryTo != null && p.getExpiryDate() != null && p.getExpiryDate().isAfter(expiryTo)) {
+                        return false;
+                    }
+                    return true;
+                })
+                .toList();
     }
 
     // =========================================================================
@@ -255,16 +342,27 @@ public class PolicyService {
      */
     @Transactional(readOnly = true)
     public Map<String, Long> getDashboardStats() {
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(clock);
         LocalDate cutoff = today.plusDays(renewalAlertDays);
 
         Map<String, Long> stats = new HashMap<>();
-        stats.put("total",        policyRepository.count());
-        stats.put("renewed",      policyRepository.countByRenewalStatus(STATUS_RENEWED));
-        stats.put("expired",      policyRepository.countExpired(today));
-        stats.put("expiringSoon", policyRepository.countExpiringSoon(today, cutoff));
-        stats.put("active",       policyRepository.countActive(cutoff));
+        stats.put("total",          policyRepository.count());
+        stats.put("renewed",        policyRepository.countByRenewalStatus(STATUS_RENEWED));
+        stats.put("expired",        policyRepository.countExpired(today));
+        stats.put("expiringSoon",   policyRepository.countExpiringSoon(today, cutoff));
+        stats.put("expiring7Days",  policyRepository.countExpiringSoon(today, today.plusDays(7)));
+        stats.put("expiring30Days", policyRepository.countExpiringSoon(today, today.plusDays(30)));
+        stats.put("active",         policyRepository.countActive(cutoff));
         return stats;
+    }
+
+    /**
+     * Current system evaluation date using the configured clock.
+     *
+     * @return current evaluation date
+     */
+    public LocalDate getToday() {
+        return LocalDate.now(clock);
     }
 
     // =========================================================================

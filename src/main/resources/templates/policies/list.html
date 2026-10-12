@@ -21,35 +21,43 @@
 
     <!-- Filter & Search Toolbar -->
     <div class="filter-bar">
-      <!-- Search Input (FR-06, FR-07) -->
-      <form th:action="@{/policies}" method="get" class="search-form">
+      <!-- Search & Date Range Filter (FR-06, FR-07, FR-08) -->
+      <form th:action="@{/policies}" method="get" class="search-form" style="max-width: 100%; flex-wrap: wrap; gap: 0.75rem;">
         <input type="text" name="search" th:value="${search}" 
-               placeholder="Search by customer name or policy number..." 
-               class="form-control" style="background-color: #fff;">
+               placeholder="Search by policy number, customer name, or email..." 
+               class="form-control" style="background-color: #fff; min-width: 250px; flex: 1;">
+
+        <div style="display: flex; align-items: center; gap: 0.4rem;">
+          <span style="font-size: 0.85rem; color: var(--color-slate-600); font-weight: 600;">Expiry:</span>
+          <input type="date" name="expiryFrom" th:value="${expiryFrom}" class="form-control" style="background-color: #fff; width: auto; font-size: 0.85rem;" title="Expiry Date From">
+          <span style="color: var(--color-slate-400);">&ndash;</span>
+          <input type="date" name="expiryTo" th:value="${expiryTo}" class="form-control" style="background-color: #fff; width: auto; font-size: 0.85rem;" title="Expiry Date To">
+        </div>
+
         <input type="hidden" name="status" th:value="${status}" th:if="${status != null}">
-        <button type="submit" class="btn btn-primary">Search</button>
-        <a th:if="${search != null and !search.isBlank()}" th:href="@{/policies}" class="btn btn-outline">Clear</a>
+        <button type="submit" class="btn btn-primary">Filter</button>
+        <a th:if="${(search != null and !search.isBlank()) or expiryFrom != null or expiryTo != null or (status != null and status != 'ALL')}" th:href="@{/policies}" class="btn btn-outline">Reset</a>
       </form>
 
       <!-- Status Filter Chips (FR-08) -->
       <div class="filter-chips">
-        <a th:href="@{/policies(search=${search})}" 
+        <a th:href="@{/policies(search=${search}, expiryFrom=${expiryFrom}, expiryTo=${expiryTo})}" 
            th:class="'filter-chip ' + (${status == null or status == '' or status == 'ALL' ? 'active' : ''})">
           All
         </a>
-        <a th:href="@{/policies(status='ACTIVE', search=${search})}" 
+        <a th:href="@{/policies(status='ACTIVE', search=${search}, expiryFrom=${expiryFrom}, expiryTo=${expiryTo})}" 
            th:class="'filter-chip ' + (${status == 'ACTIVE' ? 'active' : ''})">
           Active
         </a>
-        <a th:href="@{/policies(status='EXPIRING_SOON', search=${search})}" 
+        <a th:href="@{/policies(status='EXPIRING_SOON', search=${search}, expiryFrom=${expiryFrom}, expiryTo=${expiryTo})}" 
            th:class="'filter-chip ' + (${status == 'EXPIRING_SOON' ? 'active' : ''})">
           Expiring Soon
         </a>
-        <a th:href="@{/policies(status='EXPIRED', search=${search})}" 
+        <a th:href="@{/policies(status='EXPIRED', search=${search}, expiryFrom=${expiryFrom}, expiryTo=${expiryTo})}" 
            th:class="'filter-chip ' + (${status == 'EXPIRED' ? 'active' : ''})">
           Expired
         </a>
-        <a th:href="@{/policies(status='RENEWED', search=${search})}" 
+        <a th:href="@{/policies(status='RENEWED', search=${search}, expiryFrom=${expiryFrom}, expiryTo=${expiryTo})}" 
            th:class="'filter-chip ' + (${status == 'RENEWED' ? 'active' : ''})">
           Renewed
         </a>
@@ -108,6 +116,11 @@
                     <a th:href="@{'/policies/' + ${p.id} + '/edit'}" class="btn btn-outline btn-sm">Edit</a>
                     <form th:if="${p.renewalStatus != 'RENEWED'}" th:action="@{'/policies/' + ${p.id} + '/renew'}" method="post" style="display:inline;">
                       <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Confirm renewal of this policy?');">Renew</button>
+                    </form>
+                    <form th:action="@{'/policies/' + ${p.id} + '/delete'}" method="post" style="display:inline;">
+                      <button type="submit" class="btn btn-outline btn-sm" style="color: #dc2626; border-color: #fecaca;" 
+                              th:data-policy-number="${p.policyNumber}" 
+                              onclick="return confirm('Are you sure you want to delete policy ' + this.getAttribute('data-policy-number') + '?');">Delete</button>
                     </form>
                   </div>
                 </td>

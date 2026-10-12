@@ -1,14 +1,17 @@
 package com.policy.renewal.controller;
 
 import com.policy.renewal.model.Policy;
+import com.policy.renewal.service.PolicyReminderService;
 import com.policy.renewal.service.PolicyService;
 import jakarta.validation.Valid;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,34 +29,40 @@ import java.util.Optional;
 public class PolicyController {
 
     private final PolicyService policyService;
+    private PolicyReminderService reminderService;
 
     public PolicyController(PolicyService policyService) {
         this.policyService = policyService;
     }
 
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    public void setReminderService(PolicyReminderService reminderService) {
+        this.reminderService = reminderService;
+    }
+
     /**
-     * Lists policies with optional text search and derived status filtering.
+     * Lists policies with optional text search, status filtering, and expiry date range filtering.
      * Route: GET /policies
      */
     @GetMapping
     public String listPolicies(
             @RequestParam(name = "search", required = false) String search,
             @RequestParam(name = "status", required = false) String status,
+            @RequestParam(name = "expiryFrom", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate expiryFrom,
+            @RequestParam(name = "expiryTo", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate expiryTo,
             Model model) {
 
         List<Policy> results = (search != null && !search.isBlank())
                 ? policyService.search(search.trim())
                 : policyService.getAllPolicies();
 
-        if (status != null && !status.isBlank() && !status.equalsIgnoreCase("ALL")) {
-            results = results.stream()
-                    .filter(p -> policyService.getDerivedStatus(p).equalsIgnoreCase(status))
-                    .toList();
-        }
+        results = policyService.filterPolicies(results, status, expiryFrom, expiryTo);
 
         model.addAttribute("policies", results);
         model.addAttribute("search", search);
         model.addAttribute("status", status);
+        model.addAttribute("expiryFrom", expiryFrom);
+        model.addAttribute("expiryTo", expiryTo);
         model.addAttribute("policyService", policyService);
 
         return "policies/list";
@@ -115,6 +124,9 @@ public class PolicyController {
         model.addAttribute("policy", policy);
         model.addAttribute("derivedStatus", policyService.getDerivedStatus(policy));
         model.addAttribute("policyService", policyService);
+        model.addAttribute("reminderHistory", reminderService != null
+                ? reminderService.getReminderHistoryForPolicy(id)
+                : java.util.List.of());
 
         return "policies/detail";
     }
@@ -186,14 +198,41 @@ public class PolicyController {
     }
 
     /**
+     * Deletes an existing policy by ID.
+     * Route: POST /policies/{id}/delete or DELETE /policies/{id}
+     */
+    @RequestMapping(value = {"/{id}/delete", "/{id}"}, method = {RequestMethod.POST, RequestMethod.DELETE})
+    public String deletePolicy(
+            @PathVariable("id") Long id,
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            Optional<Policy> policyOpt = policyService.findById(id);
+            if (policyOpt.isEmpty()) {
+                return "error/404";
+            }
+            String policyNum = policyOpt.get().getPolicyNumber();
+            policyService.deleteById(id);
+            redirectAttributes.addFlashAttribute("successMessage",
+                    "Policy " + policyNum + " deleted successfully!");
+            return "redirect:/policies";
+        } catch (IllegalArgumentException ex) {
+            return "error/404";
+        }
+    }
+
+    /**
      * Displays policies with upcoming renewal dates within the alert window (FR-09).
      * Route: GET /policies/upcoming
      */
     @GetMapping("/upcoming")
-    public String upcomingRenewals(Model model) {
-        List<Policy> upcoming = policyService.getUpcomingRenewals();
+    public String upcomingRenewals(
+            @RequestParam(name = "days", required = false) Integer days,
+            Model model) {
+        int windowDays = (days != null && days > 0) ? days : policyService.getRenewalAlertDays();
+        List<Policy> upcoming = policyService.getUpcomingRenewals(windowDays);
         model.addAttribute("upcomingPolicies", upcoming);
-        model.addAttribute("alertDays", policyService.getRenewalAlertDays());
+        model.addAttribute("alertDays", windowDays);
         model.addAttribute("policyService", policyService);
 
         return "policies/upcoming";

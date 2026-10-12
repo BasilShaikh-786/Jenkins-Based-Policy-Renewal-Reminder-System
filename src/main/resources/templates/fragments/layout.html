@@ -36,6 +36,11 @@
             </a>
           </li>
           <li>
+            <a th:href="@{/reminders}" th:classappend="${activeTab == 'reminders' ? 'active' : ''}" class="nav-link">
+              🔔 Reminder Logs
+            </a>
+          </li>
+          <li>
             <a th:href="@{/policies/new}" class="nav-link btn-nav-action">
               ➕ Add Policy
             </a>

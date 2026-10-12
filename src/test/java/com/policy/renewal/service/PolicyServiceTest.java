@@ -13,6 +13,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -163,5 +165,95 @@ class PolicyServiceTest {
         assertThrows(IllegalArgumentException.class, () -> {
             policyService.markAsRenewed(999L);
         });
+    }
+
+    @Test
+    @DisplayName("Delete policy by ID removes the record from database")
+    void testDeleteByIdSuccess() {
+        Policy policy = createSamplePolicy("POL-DEL", LocalDate.now().minusMonths(6), LocalDate.now().plusMonths(6));
+        policy.setId(5L);
+
+        when(policyRepository.findById(5L)).thenReturn(Optional.of(policy));
+
+        policyService.deleteById(5L);
+
+        verify(policyRepository, times(1)).delete(policy);
+    }
+
+    @Test
+    @DisplayName("Delete policy by invalid ID throws IllegalArgumentException")
+    void testDeleteByIdNotFoundThrows() {
+        when(policyRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            policyService.deleteById(999L);
+        });
+        verify(policyRepository, never()).delete(any(Policy.class));
+    }
+
+    @Test
+    @DisplayName("Search finds policy matching customer email")
+    void testSearchByCustomerEmail() {
+        Policy policy = createSamplePolicy("POL-EMAIL", LocalDate.now(), LocalDate.now().plusYears(1));
+        policy.setId(7L);
+        policy.setCustomerEmail("special.client@example.com");
+
+        when(policyRepository.findByCustomerNameContainingIgnoreCaseOrderByExpiryDateAsc("special.client"))
+                .thenReturn(new java.util.ArrayList<>());
+        when(policyRepository.findByPolicyNumberContainingIgnoreCase("special.client"))
+                .thenReturn(new java.util.ArrayList<>());
+        when(policyRepository.findByCustomerEmailContainingIgnoreCase("special.client"))
+                .thenReturn(new java.util.ArrayList<>(List.of(policy)));
+
+        List<Policy> results = policyService.search("special.client");
+
+        assertEquals(1, results.size());
+        assertEquals("POL-EMAIL", results.get(0).getPolicyNumber());
+    }
+
+    @Test
+    @DisplayName("Filter policies correctly filters by derived status and expiry date range")
+    void testFilterPoliciesByDateRangeAndStatus() {
+        Policy p1 = createSamplePolicy("POL-1", LocalDate.now().minusMonths(6), LocalDate.now().plusDays(10)); // Expiring soon
+        Policy p2 = createSamplePolicy("POL-2", LocalDate.now().minusMonths(6), LocalDate.now().plusDays(60)); // Active
+        Policy p3 = createSamplePolicy("POL-3", LocalDate.now().minusMonths(6), LocalDate.now().plusDays(120)); // Active
+
+        List<Policy> all = List.of(p1, p2, p3);
+
+        // Filter by date range (between day 30 and day 90)
+        LocalDate from = LocalDate.now().plusDays(30);
+        LocalDate to = LocalDate.now().plusDays(90);
+        List<Policy> dateFiltered = policyService.filterPolicies(all, null, from, to);
+        assertEquals(1, dateFiltered.size());
+        assertEquals("POL-2", dateFiltered.get(0).getPolicyNumber());
+
+        // Filter by status ACTIVE
+        List<Policy> activeFiltered = policyService.filterPolicies(all, "ACTIVE", null, null);
+        assertEquals(2, activeFiltered.size());
+
+        // Filter by status EXPIRING_SOON
+        List<Policy> expiringFiltered = policyService.filterPolicies(all, "EXPIRING_SOON", null, null);
+        assertEquals(1, expiringFiltered.size());
+        assertEquals("POL-1", expiringFiltered.get(0).getPolicyNumber());
+    }
+
+    @Test
+    @DisplayName("Dashboard stats computes all metrics including 7-day and 30-day windows")
+    void testGetDashboardStatsComputesAllMetrics() {
+        when(policyRepository.count()).thenReturn(10L);
+        when(policyRepository.countByRenewalStatus(PolicyService.STATUS_RENEWED)).thenReturn(2L);
+        when(policyRepository.countExpired(any(LocalDate.class))).thenReturn(1L);
+        when(policyRepository.countExpiringSoon(any(LocalDate.class), any(LocalDate.class))).thenReturn(3L);
+        when(policyRepository.countActive(any(LocalDate.class))).thenReturn(4L);
+
+        Map<String, Long> stats = policyService.getDashboardStats();
+
+        assertEquals(10L, stats.get("total"));
+        assertEquals(2L, stats.get("renewed"));
+        assertEquals(1L, stats.get("expired"));
+        assertEquals(3L, stats.get("expiringSoon"));
+        assertEquals(3L, stats.get("expiring7Days"));
+        assertEquals(3L, stats.get("expiring30Days"));
+        assertEquals(4L, stats.get("active"));
     }
 }

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Reminder Logs')}"></head>
+<body>
+
+  <!-- Navigation -->
+  <header th:replace="~{fragments/layout :: navbar('reminders')}"></header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+
+    <!-- Flash Alerts -->
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="page-title">
+        <h2>Policy Renewal Reminder Logs</h2>
+        <p>Complete audit trail of automated and simulated policy renewal reminders</p>
+      </div>
+      <div style="display: flex; gap: 0.75rem; align-items: center;">
+        <form th:action="@{/reminders/trigger}" method="post" style="margin: 0;">
+          <input type="hidden" name="redirect" value="/reminders" />
+          <button type="submit" class="btn btn-primary" id="btn-trigger-reminders">
+            ▶ Run Simulation Check Now
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Notification Mode Banner -->
+    <div class="simulation-banner">
+      <div class="simulation-banner-text">
+        <span style="font-size: 1.35rem;">🛡️</span>
+        <div>
+          <strong>Operational Mode: Dry-Run / Safe Simulation Active</strong>
+          <div style="font-size: 0.8rem; color: var(--color-slate-500);">
+            Discrete evaluation windows: <span style="font-weight: 600;" th:text="${configuredWindows != null ? #strings.listJoin(configuredWindows, ', ') : '30, 7, 1'}">30, 7, 1</span> days &bull; Real SMTP disabled &bull; Cron runs daily at 08:00 AM
+          </div>
+        </div>
+      </div>
+      <div>
+        <span class="badge badge-simulated" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;">
+          SIMULATION ACTIVE
+        </span>
+      </div>
+    </div>
+
+    <!-- Stats Summary Row -->
+    <div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 2rem;">
+      <div class="stat-card stat-total">
+        <div class="stat-header">
+          <span>Total Reminders</span>
+          <span>🔔</span>
+        </div>
+        <div class="stat-value" th:text="${stats != null and stats['total'] != null ? stats['total'] : 0}">0</div>
+        <div class="stat-subtext">Lifetime audit logs</div>
+      </div>
+
+      <div class="stat-card stat-active">
+        <div class="stat-header">
+          <span>Simulated</span>
+          <span>🧪</span>
+        </div>
+        <div class="stat-value" style="color: #059669;" th:text="${stats != null and stats['simulated'] != null ? stats['simulated'] : 0}">0</div>
+        <div class="stat-subtext">Dry-run dispatches</div>
+      </div>
+
+      <div class="stat-card stat-expiring">
+        <div class="stat-header">
+          <span>Delivered</span>
+          <span>📧</span>
+        </div>
+        <div class="stat-value" th:text="${stats != null and stats['sent'] != null ? stats['sent'] : 0}">0</div>
+        <div class="stat-subtext">Actual outbound emails</div>
+      </div>
+
+      <div class="stat-card stat-expired">
+        <div class="stat-header">
+          <span>Failed / Errors</span>
+          <span>⚠️</span>
+        </div>
+        <div class="stat-value" style="color: #dc2626;" th:text="${stats != null and stats['failed'] != null ? stats['failed'] : 0}">0</div>
+        <div class="stat-subtext">Unsuccessful attempts</div>
+      </div>
+    </div>
+
+    <!-- Reminder History Table -->
+    <div class="card">
+      <div class="card-header">
+        <h3>📜 Execution History &amp; Notification Audit</h3>
+        <span style="font-size: 0.85rem; color: var(--color-slate-500);" th:text="${#lists.size(reminders)} + ' recent logs recorded'">0 recent logs</span>
+      </div>
+      <div class="card-body" style="padding: 0;">
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Log ID</th>
+                <th>Processed At</th>
+                <th>Policy Number</th>
+                <th>Customer Email</th>
+                <th>Window</th>
+                <th>Cycle Expiry</th>
+                <th>Status</th>
+                <th>Notes / Outcome</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:if="${#lists.isEmpty(reminders)}">
+                <td colspan="8" style="text-align: center; color: var(--color-slate-400); padding: 3rem;">
+                  <div style="font-size: 2rem; margin-bottom: 0.5rem;">📭</div>
+                  <strong>No reminder history recorded yet.</strong>
+                  <p style="font-size: 0.85rem; margin-top: 0.25rem;">
+                    Click the <em>"Run Simulation Check Now"</em> button above to test the reminder engine!
+                  </p>
+                </td>
+              </tr>
+              <tr th:each="record : ${reminders}">
+                <td>
+                  <span style="font-family: monospace; font-size: 0.85rem; color: var(--color-slate-500);" th:text="'#' + ${record.id}">#1</span>
+                </td>
+                <td>
+                  <span style="font-size: 0.85rem; color: var(--color-slate-600);"
+                        th:text="${#temporals.format(record.processedAt, 'yyyy-MM-dd HH:mm:ss')}">
+                    2026-10-12 08:00:00
+                  </span>
+                </td>
+                <td>
+                  <a th:href="@{'/policies/' + ${record.policy.id}}" style="font-weight: 700;" th:text="${record.policyNumber}">POL-1001</a>
+                </td>
+                <td>
+                  <span th:text="${record.recipientEmail != null ? record.recipientEmail : 'N/A'}" style="font-size: 0.85rem;">user@example.com</span>
+                </td>
+                <td>
+                  <span class="tag-type" th:text="${record.reminderWindow} + ' Days'">30 Days</span>
+                </td>
+                <td>
+                  <span style="font-weight: 600; color: #b45309;" th:text="${record.policyExpiryDate}">2026-10-22</span>
+                </td>
+                <td>
+                  <span th:if="${record.status == 'SIMULATED'}" class="badge badge-simulated">SIMULATED</span>
+                  <span th:if="${record.status == 'SENT'}" class="badge badge-sent">SENT</span>
+                  <span th:if="${record.status == 'FAILED'}" class="badge badge-failed">FAILED</span>
+                </td>
+                <td>
+                  <div style="font-size: 0.825rem; max-width: 380px; word-break: break-word;">
+                    <span th:if="${record.errorMessage != null}" style="color: #dc2626; font-weight: 600;" th:text="${record.errorMessage}"></span>
+                    <span th:if="${record.errorMessage == null}" th:text="${record.notes}">Simulated reminder</span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer th:replace="~{fragments/layout :: footer}"></footer>
+
+</body>
+</html>

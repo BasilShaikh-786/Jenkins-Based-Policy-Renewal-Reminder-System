@@ -70,6 +70,15 @@ public interface PolicyRepository extends JpaRepository<Policy, Long> {
      */
     List<Policy> findByPolicyNumberContainingIgnoreCase(String policyNumber);
 
+    /**
+     * Searches for policies where the customer email contains the given text,
+     * case-insensitive. Used for extended customer detail search.
+     *
+     * @param email the text to search for within the customer email
+     * @return list of matching policies
+     */
+    List<Policy> findByCustomerEmailContainingIgnoreCase(String email);
+
     // =========================================================================
     // Upcoming renewals — used by FR-09
     // =========================================================================
@@ -91,6 +100,20 @@ public interface PolicyRepository extends JpaRepository<Policy, Long> {
            "ORDER BY p.expiryDate ASC")
     List<Policy> findUpcomingRenewals(@Param("today") LocalDate today,
                                       @Param("cutoff") LocalDate cutoff);
+
+    /**
+     * Finds policies expiring on an exact target date, excluding policies marked as RENEWED.
+     * Used by the reminder engine for discrete reminder windows (e.g. 30, 7, 1 day).
+     *
+     * @param targetDate the exact expiry date
+     * @return list of matching policies
+     */
+    @Query("SELECT p FROM Policy p " +
+           "WHERE p.expiryDate = :targetDate " +
+           "AND (p.renewalStatus IS NULL OR p.renewalStatus <> 'RENEWED') " +
+           "ORDER BY p.customerName ASC")
+    List<Policy> findPoliciesExpiringOn(@Param("targetDate") LocalDate targetDate);
+
 
     // =========================================================================
     // Status-based counts — used by FR-12 (Dashboard)

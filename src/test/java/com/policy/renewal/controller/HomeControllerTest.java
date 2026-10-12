@@ -1,5 +1,6 @@
 package com.policy.renewal.controller;
 
+import com.policy.renewal.service.PolicyReminderService;
 import com.policy.renewal.service.PolicyService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -10,6 +11,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.mockito.Mockito.when;
@@ -30,13 +32,18 @@ class HomeControllerTest {
     @MockBean
     private PolicyService policyService;
 
+    @MockBean
+    private PolicyReminderService reminderService;
+
     @Test
-    @DisplayName("GET / returns 200 OK and renders index view with dashboard metrics")
+    @DisplayName("GET / returns 200 OK and renders index view with dashboard metrics including 7-day and 30-day")
     void testDashboardHome() throws Exception {
         Map<String, Long> stats = new HashMap<>();
         stats.put("total", 10L);
         stats.put("active", 5L);
         stats.put("expiringSoon", 2L);
+        stats.put("expiring7Days", 1L);
+        stats.put("expiring30Days", 2L);
         stats.put("expired", 1L);
         stats.put("renewed", 2L);
 
@@ -44,6 +51,8 @@ class HomeControllerTest {
         when(policyService.getUpcomingRenewals()).thenReturn(Collections.emptyList());
         when(policyService.getAllPolicies()).thenReturn(Collections.emptyList());
         when(policyService.getRenewalAlertDays()).thenReturn(30);
+        when(reminderService.getConfiguredWindows()).thenReturn(List.of(30, 7, 1));
+        when(reminderService.getRecentReminders()).thenReturn(Collections.emptyList());
 
         mockMvc.perform(get("/"))
                 .andExpect(status().isOk())

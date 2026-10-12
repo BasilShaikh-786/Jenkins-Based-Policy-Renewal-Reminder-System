@@ -15,7 +15,8 @@ import java.util.Collections;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -51,6 +52,7 @@ class PolicyControllerTest {
     @DisplayName("GET /policies returns 200 OK and renders policies/list view")
     void testListPolicies() throws Exception {
         when(policyService.getAllPolicies()).thenReturn(Collections.emptyList());
+        when(policyService.filterPolicies(any(), any(), any(), any())).thenReturn(Collections.emptyList());
 
         mockMvc.perform(get("/policies"))
                 .andExpect(status().isOk())
@@ -129,5 +131,75 @@ class PolicyControllerTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/policies/1"))
                 .andExpect(flash().attributeExists("successMessage"));
+    }
+
+    @Test
+    @DisplayName("POST /policies/{id}/delete removes policy and redirects to policy list")
+    void testDeletePolicySuccess() throws Exception {
+        Policy policy = createMockPolicy(1L, "POL-DEL-1");
+        when(policyService.findById(1L)).thenReturn(Optional.of(policy));
+
+        mockMvc.perform(post("/policies/1/delete"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/policies"))
+                .andExpect(flash().attributeExists("successMessage"));
+
+        verify(policyService, times(1)).deleteById(1L);
+    }
+
+    @Test
+    @DisplayName("DELETE /policies/{id} removes policy and redirects to policy list")
+    void testDeletePolicyUsingHttpDelete() throws Exception {
+        Policy policy = createMockPolicy(1L, "POL-DEL-1");
+        when(policyService.findById(1L)).thenReturn(Optional.of(policy));
+
+        mockMvc.perform(delete("/policies/1"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/policies"))
+                .andExpect(flash().attributeExists("successMessage"));
+
+        verify(policyService, times(1)).deleteById(1L);
+    }
+
+    @Test
+    @DisplayName("POST /policies/{id}/delete returns 404 when policy not found")
+    void testDeletePolicyNotFound() throws Exception {
+        when(policyService.findById(999L)).thenReturn(Optional.empty());
+
+        mockMvc.perform(post("/policies/999/delete"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("error/404"));
+    }
+
+    @Test
+    @DisplayName("GET /policies with date range filters passes dates to model and filter method")
+    void testListPoliciesWithDateRangeFilter() throws Exception {
+        when(policyService.getAllPolicies()).thenReturn(Collections.emptyList());
+        when(policyService.filterPolicies(any(), any(), any(), any())).thenReturn(Collections.emptyList());
+
+        mockMvc.perform(get("/policies")
+                        .param("expiryFrom", "2026-10-01")
+                        .param("expiryTo", "2026-12-31")
+                        .param("status", "ACTIVE"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("policies/list"))
+                .andExpect(model().attributeExists("expiryFrom"))
+                .andExpect(model().attributeExists("expiryTo"))
+                .andExpect(model().attribute("status", "ACTIVE"));
+    }
+
+    @Test
+    @DisplayName("GET /policies with email search query calls policyService.search")
+    void testListPoliciesWithEmailSearch() throws Exception {
+        when(policyService.search("alice@example.com")).thenReturn(Collections.emptyList());
+        when(policyService.filterPolicies(any(), any(), any(), any())).thenReturn(Collections.emptyList());
+
+        mockMvc.perform(get("/policies")
+                        .param("search", "alice@example.com"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("policies/list"))
+                .andExpect(model().attribute("search", "alice@example.com"));
+
+        verify(policyService, times(1)).search("alice@example.com");
     }
 }

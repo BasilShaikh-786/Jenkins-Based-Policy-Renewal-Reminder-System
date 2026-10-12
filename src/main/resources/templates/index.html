@@ -16,22 +16,42 @@
     <div class="page-header">
       <div class="page-title">
         <h2>Insurance Overview Dashboard</h2>
-        <p>Real-time renewal tracking, policy lifecycle derivation, and automated alerts</p>
+        <p>Real-time renewal tracking, discrete reminder windows, and policy lifecycle monitoring</p>
       </div>
-      <div>
+      <div style="display: flex; gap: 0.75rem; align-items: center;">
+        <a th:href="@{/reminders}" class="btn btn-outline">🔔 View Reminder Logs</a>
         <a th:href="@{/policies/new}" class="btn btn-primary">➕ Register New Policy</a>
       </div>
     </div>
 
-    <!-- KPI Metric Cards (FR-12, BR-06) -->
-    <div class="stat-grid">
+    <!-- Reminder Simulation Status Banner (Requirement C & D) -->
+    <div class="simulation-banner">
+      <div class="simulation-banner-text">
+        <span style="font-size: 1.35rem;">🛡️</span>
+        <div>
+          <strong>Reminder Engine Mode: Safe Simulation / Dry-Run</strong>
+          <div style="font-size: 0.8rem; color: var(--color-slate-500);">
+            Discrete notification windows: <span style="font-weight: 600;" th:text="${#strings.listJoin(reminderWindows, ', ')}">30, 7, 1</span> days &bull; No real emails sent &bull; Auto-cron: 08:00 AM daily
+          </div>
+        </div>
+      </div>
+      <form th:action="@{/reminders/trigger}" method="post" style="margin: 0;">
+        <input type="hidden" name="redirect" value="/" />
+        <button type="submit" class="btn btn-primary btn-sm" id="btn-run-reminder-check">
+          ▶ Run Reminder Check Now
+        </button>
+      </form>
+    </div>
+
+    <!-- KPI Metric Cards (FR-12, BR-06, Milestone Requirement A) -->
+    <div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
       <div class="stat-card stat-total">
         <div class="stat-header">
           <span>Total Policies</span>
           <span>📁</span>
         </div>
-        <div class="stat-value" th:text="${stats.total}">0</div>
-        <div class="stat-subtext">Registered in database</div>
+        <div class="stat-value" id="stat-total" th:text="${stats.total}">0</div>
+        <div class="stat-subtext">All database records</div>
       </div>
 
       <div class="stat-card stat-active">
@@ -39,17 +59,26 @@
           <span>Active</span>
           <span>✅</span>
         </div>
-        <div class="stat-value" th:text="${stats.active}">0</div>
-        <div class="stat-subtext">Beyond renewal window</div>
+        <div class="stat-value" id="stat-active" th:text="${stats.active}">0</div>
+        <div class="stat-subtext">Beyond alert window</div>
+      </div>
+
+      <div class="stat-card stat-urgent">
+        <div class="stat-header">
+          <span>Expiring in 7 Days</span>
+          <span>🚨</span>
+        </div>
+        <div class="stat-value" id="stat-expiring-7" style="color: #dc2626;" th:text="${stats.expiring7Days != null ? stats.expiring7Days : 0}">0</div>
+        <div class="stat-subtext">Urgent renewal window</div>
       </div>
 
       <div class="stat-card stat-expiring">
         <div class="stat-header">
-          <span>Expiring Soon</span>
+          <span>Expiring in 30 Days</span>
           <span>⚠️</span>
         </div>
-        <div class="stat-value" th:text="${stats.expiringSoon}">0</div>
-        <div class="stat-subtext" th:text="'Within next ' + ${alertDays} + ' days'">Within next 30 days</div>
+        <div class="stat-value" id="stat-expiring-30" th:text="${stats.expiring30Days != null ? stats.expiring30Days : (stats.expiringSoon != null ? stats.expiringSoon : 0)}">0</div>
+        <div class="stat-subtext">Standard alert window</div>
       </div>
 
       <div class="stat-card stat-expired">
@@ -57,7 +86,7 @@
           <span>Expired</span>
           <span>❌</span>
         </div>
-        <div class="stat-value" th:text="${stats.expired}">0</div>
+        <div class="stat-value" id="stat-expired" th:text="${stats.expired}">0</div>
         <div class="stat-subtext">Past expiry date</div>
       </div>
 
@@ -66,7 +95,7 @@
           <span>Renewed</span>
           <span>🔄</span>
         </div>
-        <div class="stat-value" th:text="${stats.renewed}">0</div>
+        <div class="stat-value" id="stat-renewed" th:text="${stats.renewed}">0</div>
         <div class="stat-subtext">Explicitly renewed</div>
       </div>
     </div>
@@ -74,8 +103,20 @@
     <!-- Upcoming Renewals Section -->
     <div class="card">
       <div class="card-header">
-        <h3 th:text="'⚠️ Critical Renewals Attention (Next ' + ${alertDays} + ' Days)'">Critical Renewals Attention</h3>
-        <a th:href="@{/policies/upcoming}" class="btn btn-outline btn-sm">View All Upcoming &rarr;</a>
+        <div>
+          <h3 th:text="${selectedWindow != null ? '⚠️ Upcoming Renewals (Next ' + selectedWindow + ' Days)' : '⚠️ Upcoming Renewals Attention (Next ' + alertDays + ' Days)'}">
+            Upcoming Renewals Attention
+          </h3>
+          <div style="font-size: 0.8rem; color: var(--color-slate-500); margin-top: 0.2rem;">
+            Filter window:
+            <a th:href="@{/}" class="quick-filter-link" th:classappend="${selectedWindow == null ? 'active' : ''}">All Upcoming</a>
+            <a th:href="@{/(window=7)}" class="quick-filter-link" th:classappend="${selectedWindow == 7 ? 'active' : ''}">Next 7 Days</a>
+            <a th:href="@{/(window=30)}" class="quick-filter-link" th:classappend="${selectedWindow == 30 ? 'active' : ''}">Next 30 Days</a>
+          </div>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+          <a th:href="@{/policies/upcoming}" class="btn btn-outline btn-sm">Full Upcoming List &rarr;</a>
+        </div>
       </div>
       <div class="card-body" style="padding: 0;">
         <div class="table-responsive">
@@ -88,18 +129,18 @@
                 <th>Expiry Date</th>
                 <th>Premium</th>
                 <th>Status</th>
-                <th>Action</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               <tr th:if="${#lists.isEmpty(upcomingRenewals)}">
                 <td colspan="7" style="text-align: center; color: var(--color-slate-400); padding: 2rem;">
-                  🎉 No policies currently expiring within the next <span th:text="${alertDays}">30</span> days!
+                  🎉 No policies currently expiring within the selected window!
                 </td>
               </tr>
               <tr th:each="policy : ${upcomingRenewals}">
                 <td>
-                  <strong th:text="${policy.policyNumber}">POL-001</strong>
+                  <a th:href="@{'/policies/' + ${policy.id}}" style="font-weight: 700;" th:text="${policy.policyNumber}">POL-001</a>
                 </td>
                 <td th:text="${policy.customerName}">Customer Name</td>
                 <td>
@@ -114,7 +155,7 @@
                 </td>
                 <td>
                   <div style="display: flex; gap: 0.5rem;">
-                    <a th:href="@{'/policies/' + ${policy.id}}" class="btn btn-outline btn-sm">View</a>
+                    <a th:href="@{'/policies/' + ${policy.id}}" class="btn btn-outline btn-sm">View Details</a>
                     <form th:action="@{'/policies/' + ${policy.id} + '/renew'}" method="post" style="display:inline;">
                       <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Confirm renewal of this policy?');">Renew</button>
                     </form>

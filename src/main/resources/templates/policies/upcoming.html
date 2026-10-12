@@ -14,22 +14,41 @@
         <h2 th:text="'Upcoming Renewals (Next ' + ${alertDays} + ' Days)'">Upcoming Renewals</h2>
         <p>Prioritized action queue for insurance policies requiring imminent renewal dispatch</p>
       </div>
-      <div>
+      <div style="display: flex; gap: 0.5rem; align-items: center;">
+        <a th:href="@{/reminders}" class="btn btn-outline">🔔 Reminder Logs</a>
         <a th:href="@{/policies/new}" class="btn btn-primary">➕ Add Policy</a>
       </div>
     </div>
 
-    <!-- Info banner explaining the automated Jenkins workflow integration -->
-    <div class="alert alert-info">
-      <div>
-        <strong>DevOps Automation Notice:</strong> In upcoming milestones (Weeks 7–8), Jenkins scheduled cron jobs will query this queue daily and automatically dispatch personalized email renewal notices to policyholders.
+    <!-- Info banner explaining simulation and automated workflow -->
+    <div class="simulation-banner">
+      <div class="simulation-banner-text">
+        <span style="font-size: 1.35rem;">🛡️</span>
+        <div>
+          <strong>Reminder Engine (Dry-Run / Simulation Mode Active)</strong>
+          <div style="font-size: 0.8rem; color: var(--color-slate-500);">
+            Discrete reminder notification windows: 30, 7, 1 days &bull; Real SMTP disabled
+          </div>
+        </div>
       </div>
+      <form th:action="@{/reminders/trigger}" method="post" style="margin: 0;">
+        <input type="hidden" name="redirect" value="/policies/upcoming" />
+        <button type="submit" class="btn btn-primary btn-sm">▶ Run Simulation Check</button>
+      </form>
     </div>
 
     <!-- Upcoming Policies Table -->
     <div class="card">
       <div class="card-header">
-        <h3 th:text="${#lists.size(upcomingPolicies)} + ' Policies Expiring Soon'">Expiring Soon</h3>
+        <div>
+          <h3 th:text="${#lists.size(upcomingPolicies)} + ' Policies Expiring Soon'">Expiring Soon</h3>
+          <div style="font-size: 0.8rem; color: var(--color-slate-500); margin-top: 0.2rem;">
+            Window filter:
+            <a th:href="@{/policies/upcoming}" class="quick-filter-link" th:classappend="${alertDays == 30 ? 'active' : ''}">Next 30 Days</a>
+            <a th:href="@{/policies/upcoming(days=7)}" class="quick-filter-link" th:classappend="${alertDays == 7 ? 'active' : ''}">Next 7 Days</a>
+            <a th:href="@{/policies/upcoming(days=1)}" class="quick-filter-link" th:classappend="${alertDays == 1 ? 'active' : ''}">Next 1 Day</a>
+          </div>
+        </div>
       </div>
       <div class="card-body" style="padding: 0;">
         <div class="table-responsive">

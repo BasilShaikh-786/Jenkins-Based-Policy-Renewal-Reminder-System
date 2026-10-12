@@ -2,6 +2,10 @@ package com.policy.renewal;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.scheduling.annotation.EnableScheduling;
+
+import java.time.Clock;
 
 /**
  * PolicyRenewalApplication — Spring Boot entry point.
@@ -21,6 +25,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * <p>Student: Basil Shaikh | Roll No: 23102C0026 | CMPN C
  */
 @SpringBootApplication
+@EnableScheduling
 public class PolicyRenewalApplication {
 
     /**
@@ -31,5 +36,16 @@ public class PolicyRenewalApplication {
      */
     public static void main(String[] args) {
         SpringApplication.run(PolicyRenewalApplication.class, args);
+    }
+
+    /**
+     * Provides a standard Clock bean for consistent, testable date and time handling.
+     * Production uses system default zone, while tests can provide a fixed clock.
+     *
+     * @return system default clock
+     */
+    @Bean
+    public Clock clock() {
+        return Clock.systemDefaultZone();
     }
 }
