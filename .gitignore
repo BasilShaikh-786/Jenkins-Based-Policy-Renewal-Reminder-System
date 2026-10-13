@@ -30,3 +30,15 @@ jdk-*/
 # OS specific files
 .DS_Store
 Thumbs.db
+
+# ==============================================================================
+# H2 Persistent Database Files (Milestone 2)
+# NEVER commit database files — they contain customer policy data.
+# The data/ directory itself is tracked (via data/.gitkeep) but its
+# database files are excluded here.
+# ==============================================================================
+data/*.mv.db
+data/*.trace.db
+# Also exclude any H2 files that land at the project root (e.g. during dev)
+*.mv.db
+*.trace.db
