@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Database Backups')}"></head>
+<body>
+
+  <!-- Navigation -->
+  <header th:replace="~{fragments/layout :: navbar('backups')}"></header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+
+    <!-- Flash Alerts -->
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="page-title">
+        <h2>Database Backup & Recovery Console</h2>
+        <p>Live compressed H2 database snapshots, automated disaster recovery verification, and archive management</p>
+      </div>
+      <div>
+        <form th:action="@{/backups/create}" method="post" style="margin: 0;">
+          <button type="submit" class="btn btn-primary" id="btn-create-backup">
+            💾 Create Database Backup Now
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Verification Result Banner -->
+    <div th:if="${verificationSuccess}" class="alert alert-success" style="margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
+      <div style="font-weight: 700; font-size: 1rem;">
+        ✅ Recovery Verification Passed for <span th:text="${verificationSuccess.fileName}">backup.zip</span>
+      </div>
+      <div style="font-size: 0.85rem;" th:text="${verificationSuccess.message}">
+        Restored tables verified in isolated test database.
+      </div>
+      <div style="display: flex; gap: 1.5rem; font-size: 0.85rem; font-weight: 600; margin-top: 0.25rem;">
+        <span>Policies: <span th:text="${verificationSuccess.policyCount}">0</span></span>
+        <span>Users: <span th:text="${verificationSuccess.userCount}">0</span></span>
+        <span>Reminder Records: <span th:text="${verificationSuccess.reminderRecordCount}">0</span></span>
+        <span>Audit Logs: <span th:text="${verificationSuccess.auditLogCount}">0</span></span>
+      </div>
+    </div>
+
+    <div th:if="${verificationFailure}" class="alert alert-danger" style="margin-bottom: 1.5rem;">
+      <div style="font-weight: 700;">
+        ❌ Recovery Verification Failed for <span th:text="${verificationFailure.fileName}">backup.zip</span>
+      </div>
+      <div style="font-size: 0.85rem;" th:text="${verificationFailure.errorMessage}">
+        Error during restoration.
+      </div>
+    </div>
+
+    <!-- Architecture & Safety Banner -->
+    <div class="simulation-banner" style="margin-bottom: 2rem;">
+      <div class="simulation-banner-text">
+        <span style="font-size: 1.35rem;">🛡️</span>
+        <div>
+          <strong>Non-Destructive Safe Recovery Architecture</strong>
+          <div style="font-size: 0.8rem; color: var(--color-slate-500);">
+            Backups are generated using native H2 online compressed SQL scripts. Recovery verification executes inside an isolated, temporary in-memory database instance — <strong>the persistent database files are never overwritten or endangered</strong>.
+          </div>
+        </div>
+      </div>
+      <div>
+        <span class="badge badge-active" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;">
+          ONLINE BACKUP ACTIVE
+        </span>
+      </div>
+    </div>
+
+    <!-- Backups Table -->
+    <div class="card">
+      <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-weight: 700; color: var(--color-slate-800);">
+          Available Backup Archives (<span th:text="${totalBackups}">0</span>)
+        </span>
+        <span style="font-size: 0.8rem; color: var(--color-slate-500);">
+          Storage path: ./data/backups/
+        </span>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Archive File Name</th>
+              <th>Created Timestamp</th>
+              <th>File Size</th>
+              <th>Format</th>
+              <th style="text-align: right;">Recovery & Management Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:if="${#lists.isEmpty(backups)}">
+              <td colspan="5" style="text-align: center; padding: 2.5rem; color: var(--color-slate-500);">
+                No backup archives found. Click <strong>"Create Database Backup Now"</strong> above to generate your first backup.
+              </td>
+            </tr>
+            <tr th:each="backup : ${backups}">
+              <td style="font-weight: 600; font-family: monospace;" th:text="${backup.fileName}">
+                policyrenewaldb_backup_20261017_143000.zip
+              </td>
+              <td style="white-space: nowrap; font-size: 0.85rem;"
+                  th:text="${#temporals.format(backup.createdAt, 'dd MMM yyyy, HH:mm:ss')}">
+                17 Oct 2026, 14:30:00
+              </td>
+              <td style="font-weight: 600;" th:text="${backup.formattedSize}">
+                2.4 KB
+              </td>
+              <td>
+                <span class="badge badge-active" th:text="${backup.backupType}">
+                  ZIP
+                </span>
+              </td>
+              <td style="text-align: right;">
+                <div style="display: inline-flex; gap: 0.5rem; align-items: center;">
+                  <!-- Verify Button -->
+                  <form th:action="@{/backups/{fileName}/verify(fileName=${backup.fileName})}" method="post" style="margin: 0;">
+                    <button type="submit" class="btn btn-outline btn-sm" title="Verify that this backup can be restored into an isolated database">
+                      🔍 Verify Recovery
+                    </button>
+                  </form>
+
+                  <!-- Delete Button -->
+                  <form th:action="@{/backups/{fileName}/delete(fileName=${backup.fileName})}" method="post" style="margin: 0;"
+                        onsubmit="return confirm('Are you sure you want to permanently delete this backup archive?');">
+                    <button type="submit" class="btn btn-danger btn-sm" title="Delete this backup archive">
+                      🗑️
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer th:replace="~{fragments/layout :: footer}"></footer>
+
+</body>
+</html>

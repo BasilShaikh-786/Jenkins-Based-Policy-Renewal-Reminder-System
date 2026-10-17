@@ -45,7 +45,7 @@ Thumbs.db
 data/*.mv.db
 data/*.trace.db
 data/backups/
-backups/
+/backups/
 # Also exclude any H2 files that land at the project root (e.g. during dev)
 *.mv.db
 *.trace.db
