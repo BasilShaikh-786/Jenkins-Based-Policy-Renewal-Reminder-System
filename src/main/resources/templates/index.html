@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head th:replace="~{fragments/layout :: head('Dashboard')}"></head>
 <body>
 
@@ -18,7 +18,7 @@
         <h2>Insurance Overview Dashboard</h2>
         <p>Real-time renewal tracking, discrete reminder windows, and policy lifecycle monitoring</p>
       </div>
-      <div style="display: flex; gap: 0.75rem; align-items: center;">
+      <div sec:authorize="hasRole('ADMIN')" style="display: flex; gap: 0.75rem; align-items: center;">
         <a th:href="@{/reminders}" class="btn btn-outline">🔔 View Reminder Logs</a>
         <a th:href="@{/policies/new}" class="btn btn-primary">➕ Register New Policy</a>
       </div>
@@ -31,16 +31,18 @@
         <div>
           <strong>Reminder Engine Mode: Safe Simulation / Dry-Run</strong>
           <div style="font-size: 0.8rem; color: var(--color-slate-500);">
-            Discrete notification windows: <span style="font-weight: 600;" th:text="${#strings.listJoin(reminderWindows, ', ')}">30, 7, 1</span> days &bull; No real emails sent &bull; Auto-cron: 08:00 AM daily
+            Discrete notification windows: <span style="font-weight: 600;" th:text="${#strings.listJoin(reminderWindows, ', ')}">30, 7, 1</span> days &bull; Auto-cron: 08:00 AM daily
           </div>
         </div>
       </div>
-      <form th:action="@{/reminders/trigger}" method="post" style="margin: 0;">
-        <input type="hidden" name="redirect" value="/" />
-        <button type="submit" class="btn btn-primary btn-sm" id="btn-run-reminder-check">
-          ▶ Run Reminder Check Now
-        </button>
-      </form>
+      <div sec:authorize="hasRole('ADMIN')">
+        <form th:action="@{/reminders/trigger}" method="post" style="margin: 0;">
+          <input type="hidden" name="redirect" value="/" />
+          <button type="submit" class="btn btn-primary btn-sm" id="btn-run-reminder-check">
+            ▶ Run Reminder Check Now
+          </button>
+        </form>
+      </div>
     </div>
 
     <!-- KPI Metric Cards (FR-12, BR-06, Milestone Requirement A) -->
@@ -135,12 +137,17 @@
             <tbody>
               <tr th:if="${#lists.isEmpty(upcomingRenewals)}">
                 <td colspan="7" style="text-align: center; color: var(--color-slate-400); padding: 2rem;">
-                  🎉 No policies currently expiring within the selected window!
+                  🎉 No policies currently expiring within this alert window.
                 </td>
               </tr>
               <tr th:each="policy : ${upcomingRenewals}">
                 <td>
-                  <a th:href="@{'/policies/' + ${policy.id}}" style="font-weight: 700;" th:text="${policy.policyNumber}">POL-001</a>
+                  <span sec:authorize="hasRole('ADMIN')">
+                    <a th:href="@{'/policies/' + ${policy.id}}" style="font-weight: 700;" th:text="${policy.policyNumber}">POL-001</a>
+                  </span>
+                  <span sec:authorize="!hasRole('ADMIN')" style="font-weight: 700; color: var(--color-slate-800);" th:text="${policy.policyNumber}">
+                    POL-001
+                  </span>
                 </td>
                 <td th:text="${policy.customerName}">Customer Name</td>
                 <td>
@@ -155,7 +162,7 @@
                 </td>
                 <td>
                   <div style="display: flex; gap: 0.5rem;">
-                    <a th:href="@{'/policies/' + ${policy.id}}" class="btn btn-outline btn-sm">View Details</a>
+                    <a sec:authorize="hasRole('ADMIN')" th:href="@{'/policies/' + ${policy.id}}" class="btn btn-outline btn-sm">View Details</a>
                     <form th:action="@{'/policies/' + ${policy.id} + '/renew'}" method="post" style="display:inline;">
                       <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Confirm renewal of this policy?');">Renew</button>
                     </form>
@@ -185,7 +192,7 @@
                 <th>Start Date</th>
                 <th>Expiry Date</th>
                 <th>Derived Status</th>
-                <th>Details</th>
+                <th sec:authorize="hasRole('ADMIN')">Details</th>
               </tr>
             </thead>
             <tbody>
@@ -196,7 +203,12 @@
               </tr>
               <tr th:each="policy : ${recentPolicies}">
                 <td>
-                  <a th:href="@{'/policies/' + ${policy.id}}" style="font-weight: 700;" th:text="${policy.policyNumber}">POL-001</a>
+                  <span sec:authorize="hasRole('ADMIN')">
+                    <a th:href="@{'/policies/' + ${policy.id}}" style="font-weight: 700;" th:text="${policy.policyNumber}">POL-001</a>
+                  </span>
+                  <span sec:authorize="!hasRole('ADMIN')" style="font-weight: 700; color: var(--color-slate-800);" th:text="${policy.policyNumber}">
+                    POL-001
+                  </span>
                 </td>
                 <td th:text="${policy.customerName}">Customer</td>
                 <td>
@@ -211,7 +223,7 @@
                     ACTIVE
                   </span>
                 </td>
-                <td>
+                <td sec:authorize="hasRole('ADMIN')">
                   <a th:href="@{'/policies/' + ${policy.id}}" class="btn btn-outline btn-sm">Inspect</a>
                 </td>
               </tr>

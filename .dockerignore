@@ -1,0 +1,29 @@
+# Git metadata
+.git
+.gitignore
+
+# IDE & Editor files
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# Build artifacts & temporary logs
+target/
+*.log
+logs/
+startup-error.txt
+
+# Local archives and dev binaries
+apache-maven-*/
+jdk-*/
+*.zip
+*.tar.gz
+
+# Local OS files
+.DS_Store
+Thumbs.db
+
+# Documentation not needed inside container image
+docs/

@@ -5,6 +5,7 @@ import com.policy.renewal.service.PolicyReminderService;
 import com.policy.renewal.service.PolicyService;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -45,6 +46,7 @@ public class PolicyController {
      * Route: GET /policies
      */
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public String listPolicies(
             @RequestParam(name = "search", required = false) String search,
             @RequestParam(name = "status", required = false) String status,
@@ -73,6 +75,7 @@ public class PolicyController {
      * Route: GET /policies/new
      */
     @GetMapping("/new")
+    @PreAuthorize("hasRole('ADMIN')")
     public String showCreateForm(Model model) {
         if (!model.containsAttribute("policy")) {
             model.addAttribute("policy", new Policy());
@@ -86,6 +89,7 @@ public class PolicyController {
      * Route: POST /policies
      */
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public String createPolicy(
             @Valid @ModelAttribute("policy") Policy policy,
             BindingResult bindingResult,
@@ -114,6 +118,7 @@ public class PolicyController {
      * Route: GET /policies/{id}
      */
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public String viewPolicy(@PathVariable("id") Long id, Model model) {
         Optional<Policy> policyOpt = policyService.findById(id);
         if (policyOpt.isEmpty()) {
@@ -136,6 +141,7 @@ public class PolicyController {
      * Route: GET /policies/{id}/edit
      */
     @GetMapping("/{id}/edit")
+    @PreAuthorize("hasRole('ADMIN')")
     public String showEditForm(@PathVariable("id") Long id, Model model) {
         Optional<Policy> policyOpt = policyService.findById(id);
         if (policyOpt.isEmpty()) {
@@ -152,6 +158,7 @@ public class PolicyController {
      * Route: POST /policies/{id}
      */
     @PostMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public String updatePolicy(
             @PathVariable("id") Long id,
             @Valid @ModelAttribute("policy") Policy policy,
@@ -183,6 +190,7 @@ public class PolicyController {
      * Route: POST /policies/{id}/renew
      */
     @PostMapping("/{id}/renew")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public String markAsRenewed(
             @PathVariable("id") Long id,
             RedirectAttributes redirectAttributes) {
@@ -202,6 +210,7 @@ public class PolicyController {
      * Route: POST /policies/{id}/delete or DELETE /policies/{id}
      */
     @RequestMapping(value = {"/{id}/delete", "/{id}"}, method = {RequestMethod.POST, RequestMethod.DELETE})
+    @PreAuthorize("hasRole('ADMIN')")
     public String deletePolicy(
             @PathVariable("id") Long id,
             RedirectAttributes redirectAttributes) {
@@ -226,6 +235,7 @@ public class PolicyController {
      * Route: GET /policies/upcoming
      */
     @GetMapping("/upcoming")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public String upcomingRenewals(
             @RequestParam(name = "days", required = false) Integer days,
             Model model) {

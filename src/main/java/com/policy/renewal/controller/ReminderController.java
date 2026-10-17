@@ -4,6 +4,7 @@ import com.policy.renewal.model.ReminderRecord;
 import com.policy.renewal.service.PolicyReminderService;
 import com.policy.renewal.service.ReminderRunReport;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -27,6 +28,7 @@ import java.util.Map;
  * <p>Student: Basil Shaikh | Roll No: 23102C0026 | CMPN C
  */
 @Controller
+@PreAuthorize("hasRole('ADMIN')")
 public class ReminderController {
 
     private final PolicyReminderService reminderService;

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>403 Forbidden — Access Denied</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+  <style>
+    .error-container {
+      min-height: 80vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2rem;
+    }
+    .error-card {
+      background: #ffffff;
+      border: 1px solid var(--color-slate-200);
+      border-radius: var(--radius-lg);
+      padding: 3rem 2rem;
+      max-width: 520px;
+      box-shadow: var(--shadow-card);
+    }
+    .error-code {
+      font-size: 3.5rem;
+      font-weight: 800;
+      color: #dc2626;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+    .error-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--color-dark);
+      margin-bottom: 1rem;
+    }
+    .error-desc {
+      color: var(--color-slate-600);
+      font-size: 0.95rem;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+    }
+    .error-actions {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="error-container">
+    <div class="error-card">
+      <div style="font-size: 3rem; margin-bottom: 0.5rem;">🔒</div>
+      <div class="error-code">403</div>
+      <h2 class="error-title">Access Denied &bull; Insufficient Privileges</h2>
+      <p class="error-desc">
+        Your user account does not have sufficient role permissions to access this administrative resource.
+        Operations such as policy creation, editing, deletion, full customer dossiers, and reminder management are restricted to <strong>ADMIN</strong> roles.
+      </p>
+      <div class="error-actions">
+        <a th:href="@{/}" class="btn btn-primary">&larr; Return to Dashboard</a>
+        <a th:href="@{/policies}" class="btn btn-outline">Browse Policies</a>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head th:replace="~{fragments/layout :: head('Upcoming Renewals')}"></head>
 <body>
 
@@ -14,7 +14,7 @@
         <h2 th:text="'Upcoming Renewals (Next ' + ${alertDays} + ' Days)'">Upcoming Renewals</h2>
         <p>Prioritized action queue for insurance policies requiring imminent renewal dispatch</p>
       </div>
-      <div style="display: flex; gap: 0.5rem; align-items: center;">
+      <div sec:authorize="hasRole('ADMIN')" style="display: flex; gap: 0.5rem; align-items: center;">
         <a th:href="@{/reminders}" class="btn btn-outline">🔔 Reminder Logs</a>
         <a th:href="@{/policies/new}" class="btn btn-primary">➕ Add Policy</a>
       </div>
@@ -27,14 +27,16 @@
         <div>
           <strong>Reminder Engine (Dry-Run / Simulation Mode Active)</strong>
           <div style="font-size: 0.8rem; color: var(--color-slate-500);">
-            Discrete reminder notification windows: 30, 7, 1 days &bull; Real SMTP disabled
+            Discrete reminder notification windows: 30, 7, 1 days &bull; Automated daily schedule: 08:00 AM IST
           </div>
         </div>
       </div>
-      <form th:action="@{/reminders/trigger}" method="post" style="margin: 0;">
-        <input type="hidden" name="redirect" value="/policies/upcoming" />
-        <button type="submit" class="btn btn-primary btn-sm">▶ Run Simulation Check</button>
-      </form>
+      <div sec:authorize="hasRole('ADMIN')">
+        <form th:action="@{/reminders/trigger}" method="post" style="margin: 0;">
+          <input type="hidden" name="redirect" value="/policies/upcoming" />
+          <button type="submit" class="btn btn-primary btn-sm">▶ Run Simulation Check</button>
+        </form>
+      </div>
     </div>
 
     <!-- Upcoming Policies Table -->
@@ -73,10 +75,21 @@
               </tr>
               <tr th:each="policy : ${upcomingPolicies}">
                 <td>
-                  <a th:href="@{'/policies/' + ${policy.id}}" style="font-weight: 700;" th:text="${policy.policyNumber}">POL-1001</a>
+                  <span sec:authorize="hasRole('ADMIN')">
+                    <a th:href="@{'/policies/' + ${policy.id}}" style="font-weight: 700;" th:text="${policy.policyNumber}">POL-1001</a>
+                  </span>
+                  <span sec:authorize="!hasRole('ADMIN')" style="font-weight: 700; color: var(--color-slate-800);" th:text="${policy.policyNumber}">
+                    POL-1001
+                  </span>
                 </td>
                 <td th:text="${policy.customerName}">Customer Name</td>
-                <td style="font-size: 0.85rem; color: var(--color-slate-500);" th:text="${policy.customerEmail != null ? policy.customerEmail : '—'}">email@example.com</td>
+                <td>
+                  <span sec:authorize="hasRole('ADMIN')" style="font-size: 0.85rem; color: var(--color-slate-500);"
+                        th:text="${policy.customerEmail != null ? policy.customerEmail : '—'}">email@example.com</span>
+                  <span sec:authorize="!hasRole('ADMIN')" style="font-size: 0.85rem; color: var(--color-slate-400); font-style: italic;">
+                    [Restricted - Admin]
+                  </span>
+                </td>
                 <td>
                   <span class="tag-type" th:text="${policy.policyType}">Vehicle</span>
                 </td>
@@ -89,7 +102,7 @@
                 </td>
                 <td>
                   <div style="display: flex; gap: 0.4rem;">
-                    <a th:href="@{'/policies/' + ${policy.id}}" class="btn btn-outline btn-sm">View</a>
+                    <a sec:authorize="hasRole('ADMIN')" th:href="@{'/policies/' + ${policy.id}}" class="btn btn-outline btn-sm">View</a>
                     <form th:action="@{'/policies/' + ${policy.id} + '/renew'}" method="post" style="display:inline;">
                       <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Confirm renewal of this policy?');">Renew</button>
                     </form>

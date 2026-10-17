@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Audit Trail')}"></head>
+<body>
+
+  <!-- Navigation -->
+  <header th:replace="~{fragments/layout :: navbar('audit')}"></header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+
+    <!-- Flash Alerts -->
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="page-title">
+        <h2>System Audit Trail</h2>
+        <p>Comprehensive, immutable log of administrative operations, policy lifecycle mutations, and security events</p>
+      </div>
+      <div>
+        <span class="badge badge-urgent" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;">
+          ADMIN AUDIT ACCESS
+        </span>
+      </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar" style="margin-bottom: 1.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+      <a th:href="@{/audit}"
+         th:class="${selectedType == 'ALL' ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm'}">
+        All Events
+      </a>
+      <a th:href="@{/audit(type='POLICY')}"
+         th:class="${selectedType == 'POLICY' ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm'}">
+        📁 Policies
+      </a>
+      <a th:href="@{/audit(type='USER')}"
+         th:class="${selectedType == 'USER' ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm'}">
+        👥 Users
+      </a>
+      <a th:href="@{/audit(type='DATABASE')}"
+         th:class="${selectedType == 'DATABASE' ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm'}">
+        💾 Database & Backups
+      </a>
+      <a th:href="@{/audit(type='SECURITY')}"
+         th:class="${selectedType == 'SECURITY' ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm'}">
+        🔒 Security
+      </a>
+    </div>
+
+    <!-- Audit Records Table -->
+    <div class="card">
+      <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-weight: 700; color: var(--color-slate-800);">
+          Audit Records (<span th:text="${totalLogsCount}">0</span>)
+        </span>
+        <span style="font-size: 0.8rem; color: var(--color-slate-500);">
+          Ordered by most recent timestamp
+        </span>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Action</th>
+              <th>Category</th>
+              <th>Target Identifier</th>
+              <th>Performed By</th>
+              <th>Status</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:if="${#lists.isEmpty(logs)}">
+              <td colspan="7" style="text-align: center; padding: 2.5rem; color: var(--color-slate-500);">
+                No audit log records found for the selected category.
+              </td>
+            </tr>
+            <tr th:each="entry : ${logs}">
+              <td style="white-space: nowrap; font-size: 0.85rem;"
+                  th:text="${#temporals.format(entry.timestamp, 'dd MMM yyyy, HH:mm:ss')}">
+                17 Oct 2026, 14:30:00
+              </td>
+              <td>
+                <span class="badge"
+                      th:classappend="${#strings.contains(entry.action, 'DELETE') ? 'badge-urgent' : (#strings.contains(entry.action, 'CREATED') or #strings.contains(entry.action, 'REGISTERED') ? 'badge-active' : 'badge-simulated')}"
+                      th:text="${entry.action}">
+                  ACTION
+                </span>
+              </td>
+              <td>
+                <span class="badge" style="background: var(--color-slate-100); color: var(--color-slate-700); border: 1px solid var(--color-slate-300);"
+                      th:text="${entry.resourceType}">
+                  POLICY
+                </span>
+              </td>
+              <td style="font-weight: 600; font-family: monospace;" th:text="${entry.resourceId != null ? entry.resourceId : '—'}">
+                POL-1001
+              </td>
+              <td style="font-weight: 600;" th:text="${entry.performedBy}">
+                admin
+              </td>
+              <td>
+                <span class="badge"
+                      th:classappend="${entry.status == 'SUCCESS' ? 'badge-active' : 'badge-urgent'}"
+                      th:text="${entry.status}">
+                  SUCCESS
+                </span>
+              </td>
+              <td style="max-width: 320px; font-size: 0.85rem; color: var(--color-slate-700);"
+                  th:text="${entry.details}">
+                Action details description
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer th:replace="~{fragments/layout :: footer}"></footer>
+
+</body>
+</html>

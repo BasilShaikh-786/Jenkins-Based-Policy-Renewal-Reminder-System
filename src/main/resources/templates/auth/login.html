@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — Policy Renewal Reminder System</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+  <style>
+    .login-container {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+      background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+    }
+    .login-card {
+      background: #ffffff;
+      border: 1px solid var(--color-slate-200);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-card);
+      width: 100%;
+      max-width: 440px;
+      padding: 2.5rem;
+    }
+    .login-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .login-brand-icon {
+      font-size: 2.75rem;
+      margin-bottom: 0.75rem;
+      display: inline-block;
+    }
+    .login-title {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--color-dark);
+      letter-spacing: -0.025em;
+    }
+    .login-subtitle {
+      font-size: 0.875rem;
+      color: var(--color-slate-500);
+      margin-top: 0.25rem;
+    }
+    .login-btn {
+      width: 100%;
+      padding: 0.85rem;
+      font-size: 1rem;
+      font-weight: 600;
+      margin-top: 1rem;
+    }
+    .login-footer-info {
+      margin-top: 2rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--color-slate-200);
+      font-size: 0.8rem;
+      color: var(--color-slate-500);
+      text-align: center;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-container">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="login-brand-icon">🛡️</div>
+        <h2 class="login-title">PolicyGuard Access</h2>
+        <p class="login-subtitle">Sign in to manage policies and renewal reminders</p>
+      </div>
+
+      <!-- Flash / Security Feedback -->
+      <div th:if="${errorMessage}" class="alert alert-danger" style="margin-bottom: 1.5rem;">
+        <span th:text="${errorMessage}">Invalid username or password.</span>
+      </div>
+
+      <div th:if="${successMessage}" class="alert alert-success" style="margin-bottom: 1.5rem;">
+        <span th:text="${successMessage}">Logged out successfully.</span>
+      </div>
+
+      <!-- Spring Security Login Form -->
+      <form th:action="@{/login}" method="post">
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+          <label for="username" class="form-label">Username</label>
+          <input type="text" id="username" name="username" class="form-control"
+                 placeholder="Enter username" required autofocus autocomplete="username">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+          <label for="password" class="form-label">Password</label>
+          <input type="password" id="password" name="password" class="form-control"
+                 placeholder="Enter password" required autocomplete="current-password">
+        </div>
+
+        <button type="submit" id="btn-login-submit" class="btn btn-primary login-btn">
+          Sign In &rarr;
+        </button>
+      </form>
+
+      <div class="login-footer-info">
+        <strong>Role-Based Access Control (RBAC)</strong><br>
+        Administrative operations (policy create/edit/delete, user management, and manual triggers) are restricted to <strong>ADMIN</strong>.<br>
+        Operational viewing is available to <strong>STAFF</strong>.
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

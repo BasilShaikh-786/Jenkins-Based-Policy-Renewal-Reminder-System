@@ -52,6 +52,7 @@ public class PolicyService {
 
     private final PolicyRepository policyRepository;
     private Clock clock = Clock.systemDefaultZone();
+    private AuditLogService auditLogService;
 
     /**
      * Alert window: number of days before expiry at which a policy is considered
@@ -67,25 +68,42 @@ public class PolicyService {
      * @param policyRepository the repository for POLICY database operations
      */
     public PolicyService(PolicyRepository policyRepository) {
-        this(policyRepository, Clock.systemDefaultZone());
+        this(policyRepository, Clock.systemDefaultZone(), null);
     }
 
     /**
-     * Full constructor injection with Clock bean for deterministic, testable date handling.
+     * Constructor injection with Clock bean for deterministic date handling.
      *
      * @param policyRepository the repository for POLICY database operations
      * @param clock the clock instance to determine current time
      */
-    @org.springframework.beans.factory.annotation.Autowired
     public PolicyService(PolicyRepository policyRepository, Clock clock) {
+        this(policyRepository, clock, null);
+    }
+
+    /**
+     * Full constructor injection with Clock bean and optional AuditLogService.
+     *
+     * @param policyRepository the repository for POLICY database operations
+     * @param clock the clock instance to determine current time
+     * @param auditLogService optional service for persisting audit log entries
+     */
+    @org.springframework.beans.factory.annotation.Autowired
+    public PolicyService(PolicyRepository policyRepository, Clock clock,
+                         @org.springframework.beans.factory.annotation.Autowired(required = false) AuditLogService auditLogService) {
         this.policyRepository = policyRepository;
         this.clock = clock != null ? clock : Clock.systemDefaultZone();
+        this.auditLogService = auditLogService;
     }
 
     public void setClock(Clock clock) {
         if (clock != null) {
             this.clock = clock;
         }
+    }
+
+    public void setAuditLogService(AuditLogService auditLogService) {
+        this.auditLogService = auditLogService;
     }
 
     // =========================================================================
@@ -153,7 +171,14 @@ public class PolicyService {
                     "Policy number '" + policy.getPolicyNumber() + "' is already in use.");
         }
 
-        return policyRepository.save(policy);
+        boolean isNew = (policy.getId() == null);
+        Policy saved = policyRepository.save(policy);
+        if (auditLogService != null) {
+            String action = isNew ? com.policy.renewal.model.AuditLog.ACTION_POLICY_CREATED : com.policy.renewal.model.AuditLog.ACTION_POLICY_UPDATED;
+            auditLogService.logSuccess(action, com.policy.renewal.model.AuditLog.RESOURCE_POLICY, saved.getPolicyNumber(),
+                    (isNew ? "Created" : "Updated") + " policy " + saved.getPolicyNumber() + " for " + saved.getCustomerName());
+        }
+        return saved;
     }
 
     /**
@@ -172,7 +197,12 @@ public class PolicyService {
                 .orElseThrow(() -> new IllegalArgumentException(
                         "Policy not found with ID: " + id));
         policy.setRenewalStatus(STATUS_RENEWED);
-        policyRepository.save(policy);
+        Policy saved = policyRepository.save(policy);
+        if (auditLogService != null) {
+            auditLogService.logSuccess(com.policy.renewal.model.AuditLog.ACTION_POLICY_RENEWED,
+                    com.policy.renewal.model.AuditLog.RESOURCE_POLICY, saved.getPolicyNumber(),
+                    "Marked policy " + saved.getPolicyNumber() + " as renewed.");
+        }
     }
 
     /**
@@ -185,7 +215,14 @@ public class PolicyService {
         Policy policy = policyRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException(
                         "Policy not found with ID: " + id));
+        String policyNumber = policy.getPolicyNumber();
+        String customerName = policy.getCustomerName();
         policyRepository.delete(policy);
+        if (auditLogService != null) {
+            auditLogService.logSuccess(com.policy.renewal.model.AuditLog.ACTION_POLICY_DELETED,
+                    com.policy.renewal.model.AuditLog.RESOURCE_POLICY, policyNumber,
+                    "Deleted policy " + policyNumber + " (Customer: " + customerName + ")");
+        }
     }
 
     // =========================================================================

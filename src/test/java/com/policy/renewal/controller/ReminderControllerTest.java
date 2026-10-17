@@ -7,7 +7,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
@@ -17,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.mockito.Mockito.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -27,6 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * <p>Student: Basil Shaikh | Roll No: 23102C0026 | CMPN C
  */
 @WebMvcTest(ReminderController.class)
+@Import({com.policy.renewal.security.SecurityConfig.class, AuthController.class})
 class ReminderControllerTest {
 
     @Autowired
@@ -36,7 +40,8 @@ class ReminderControllerTest {
     private PolicyReminderService reminderService;
 
     @Test
-    @DisplayName("GET /reminders renders reminders/list view with stats and configured windows")
+    @WithMockUser(roles = {"ADMIN"})
+    @DisplayName("GET /reminders as ADMIN renders reminders/list view with stats and configured windows")
     void testListReminders() throws Exception {
         Map<String, Long> stats = new HashMap<>();
         stats.put("total", 0L);
@@ -57,12 +62,14 @@ class ReminderControllerTest {
     }
 
     @Test
-    @DisplayName("POST /reminders/trigger executes processing and redirects with flash message")
+    @WithMockUser(roles = {"ADMIN"})
+    @DisplayName("POST /reminders/trigger as ADMIN with CSRF executes processing and redirects with flash message")
     void testTriggerRemindersPost() throws Exception {
         ReminderRunReport report = new ReminderRunReport(LocalDate.now());
         when(reminderService.processAllReminders()).thenReturn(report);
 
         mockMvc.perform(post("/reminders/trigger")
+                        .with(csrf())
                         .param("redirect", "/"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/"))
@@ -72,7 +79,8 @@ class ReminderControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/reminders/trigger returns 200 OK JSON response for CI/CD pipelines")
+    @WithMockUser(roles = {"ADMIN"})
+    @DisplayName("POST /api/reminders/trigger as ADMIN returns 200 OK JSON response for CI/CD pipelines")
     void testTriggerRemindersApi() throws Exception {
         ReminderRunReport report = new ReminderRunReport(LocalDate.of(2026, 10, 15));
         when(reminderService.processAllReminders()).thenReturn(report);
@@ -85,5 +93,41 @@ class ReminderControllerTest {
                 .andExpect(jsonPath("$.evaluationDate").value("2026-10-15"));
 
         verify(reminderService, times(1)).processAllReminders();
+    }
+
+    @Test
+    @WithMockUser(roles = {"STAFF"})
+    @DisplayName("GET /reminders as STAFF returns 403 Forbidden")
+    void testListRemindersForbiddenForStaff() throws Exception {
+        mockMvc.perform(get("/reminders"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = {"STAFF"})
+    @DisplayName("POST /reminders/trigger as STAFF returns 403 Forbidden")
+    void testTriggerRemindersForbiddenForStaff() throws Exception {
+        mockMvc.perform(post("/reminders/trigger").with(csrf()))
+                .andExpect(status().isForbidden());
+
+        verify(reminderService, never()).processAllReminders();
+    }
+
+    @Test
+    @WithMockUser(roles = {"ADMIN"})
+    @DisplayName("POST /reminders/trigger without CSRF token returns 403 Forbidden")
+    void testTriggerRemindersWithoutCsrfForbidden() throws Exception {
+        mockMvc.perform(post("/reminders/trigger"))
+                .andExpect(status().isForbidden());
+
+        verify(reminderService, never()).processAllReminders();
+    }
+
+    @Test
+    @DisplayName("GET /reminders without authentication redirects to login")
+    void testListRemindersUnauthenticated() throws Exception {
+        mockMvc.perform(get("/reminders").accept(MediaType.TEXT_HTML))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("http://localhost/login"));
     }
 }

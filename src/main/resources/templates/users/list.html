@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('User Management')}"></head>
+<body>
+
+  <!-- Navigation -->
+  <header th:replace="~{fragments/layout :: navbar('users')}"></header>
+
+  <main class="main-content">
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+
+    <div class="page-header">
+      <div class="page-title">
+        <h2>User Accounts &amp; Role-Based Access</h2>
+        <p>Administer database-backed system accounts, role assignments, and authentication status</p>
+      </div>
+      <div>
+        <a th:href="@{/users/new}" class="btn btn-primary" id="btn-create-user">➕ Add New User</a>
+      </div>
+    </div>
+
+    <!-- Users Table Card -->
+    <div class="card">
+      <div class="card-header">
+        <h3 th:text="${#lists.size(users)} + ' Registered Accounts'">Users Directory</h3>
+      </div>
+      <div class="card-body" style="padding: 0;">
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Username</th>
+                <th>Full Name</th>
+                <th>Email</th>
+                <th>Assigned Role</th>
+                <th>Status</th>
+                <th>Created At</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:if="${#lists.isEmpty(users)}">
+                <td colspan="6" style="text-align: center; color: var(--color-slate-400); padding: 3rem;">
+                  No user accounts registered.
+                </td>
+              </tr>
+              <tr th:each="u : ${users}">
+                <td>
+                  <strong style="color: var(--color-slate-800);" th:text="${u.username}">admin</strong>
+                </td>
+                <td th:text="${u.fullName}">System Administrator</td>
+                <td style="font-size: 0.85rem; color: var(--color-slate-500);" th:text="${u.email != null and !u.email.isBlank() ? u.email : '—'}">admin@policyguard.local</td>
+                <td>
+                  <span th:class="'badge ' + (${u.role.name() == 'ADMIN' ? 'badge-urgent' : 'badge-active'})"
+                        th:text="${u.role.name()}">
+                    ADMIN
+                  </span>
+                </td>
+                <td>
+                  <span th:if="${u.enabled}" class="badge badge-active">Active</span>
+                  <span th:unless="${u.enabled}" class="badge badge-expired">Disabled</span>
+                </td>
+                <td style="font-size: 0.85rem; color: var(--color-slate-500);" th:text="${#temporals.format(u.createdAt, 'yyyy-MM-dd HH:mm')}">2026-10-13 12:00</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

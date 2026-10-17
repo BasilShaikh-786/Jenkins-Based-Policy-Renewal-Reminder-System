@@ -1,0 +1,34 @@
+# ==============================================================================
+# Docker Compose — Jenkins-Based Policy Renewal Reminder System
+# Milestone 6: Multi-Container / Deployment Specification
+# Student: Basil Shaikh | Roll No: 23102C0026 | CMPN C
+# ==============================================================================
+
+services:
+  policy-renewal-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: policy-renewal-system:latest
+    container_name: policy-renewal-app
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      - SERVER_PORT=8081
+      - SPRING_DATASOURCE_URL=jdbc:h2:file:./data/policyrenewaldb
+      - REMINDER_SCHEDULE_ENABLED=${REMINDER_SCHEDULE_ENABLED:-false}
+      - NOTIFICATION_SIMULATION_MODE=${NOTIFICATION_SIMULATION_MODE:-true}
+      - APP_INITIAL_ADMIN_USERNAME=${APP_INITIAL_ADMIN_USERNAME:-admin}
+      - APP_INITIAL_ADMIN_PASSWORD=${APP_INITIAL_ADMIN_PASSWORD:-}
+      - SCHEDULER_TIMEZONE=${SCHEDULER_TIMEZONE:-Asia/Kolkata}
+      - JAVA_OPTS=-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/./urandom
+    volumes:
+      # Mount host ./data directory to persist H2 database file and backups safely
+      - ./data:/app/data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8081/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s

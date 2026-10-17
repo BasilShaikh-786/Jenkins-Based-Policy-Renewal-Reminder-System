@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Register User')}"></head>
+<body>
+
+  <!-- Navigation -->
+  <header th:replace="~{fragments/layout :: navbar('users')}"></header>
+
+  <main class="main-content">
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+
+    <div class="page-header">
+      <div class="page-title">
+        <h2>Register User Account</h2>
+        <p>Create a database-backed user account with secure BCrypt password hashing</p>
+      </div>
+      <div>
+        <a th:href="@{/users}" class="btn btn-outline">&larr; Back to Users</a>
+      </div>
+    </div>
+
+    <!-- User Registration Form Card -->
+    <div class="card" style="max-width: 680px; margin: 0 auto;">
+      <div class="card-header">
+        <h3>Account Credentials &amp; Role Assignment</h3>
+      </div>
+      <div class="card-body">
+        <form th:action="@{/users}" th:object="${userDto}" method="post">
+
+          <div class="form-group">
+            <label for="username" class="form-label">Username <span style="color: #dc2626;">*</span></label>
+            <input type="text" id="username" th:field="*{username}" class="form-control"
+                   placeholder="e.g. jsmith or admin2" required minlength="3" maxlength="50">
+            <span class="field-error" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></span>
+            <small style="color: var(--color-slate-500); font-size: 0.8rem;">Unique login identifier (3-50 characters, letters/numbers).</small>
+          </div>
+
+          <div class="form-group">
+            <label for="password" class="form-label">Password <span style="color: #dc2626;">*</span></label>
+            <input type="password" id="password" th:field="*{password}" class="form-control"
+                   placeholder="Minimum 6 characters" required minlength="6">
+            <span class="field-error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></span>
+            <small style="color: var(--color-slate-500); font-size: 0.8rem;">Will be hashed using BCrypt. Never stored in plaintext.</small>
+          </div>
+
+          <div class="form-group">
+            <label for="fullName" class="form-label">Full Name <span style="color: #dc2626;">*</span></label>
+            <input type="text" id="fullName" th:field="*{fullName}" class="form-control"
+                   placeholder="e.g. John Smith" required maxlength="100">
+            <span class="field-error" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="email" class="form-label">Email Address</label>
+            <input type="email" id="email" th:field="*{email}" class="form-control"
+                   placeholder="e.g. jsmith@example.com" maxlength="150">
+            <span class="field-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="role" class="form-label">System Role <span style="color: #dc2626;">*</span></label>
+            <select id="role" th:field="*{role}" class="form-control" required>
+              <option value="STAFF">STAFF — Operational access (Dashboard, Policies list, Renewals)</option>
+              <option value="ADMIN">ADMIN — Full privileges (Policy mutations, User admin, Reminders)</option>
+            </select>
+            <span class="field-error" th:if="${#fields.hasErrors('role')}" th:errors="*{role}"></span>
+          </div>
+
+          <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
+            <a th:href="@{/users}" class="btn btn-outline">Cancel</a>
+            <button type="submit" id="btn-submit-user" class="btn btn-primary">Create Account &rarr;</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

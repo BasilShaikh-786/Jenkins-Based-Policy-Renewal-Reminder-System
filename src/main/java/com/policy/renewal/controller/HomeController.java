@@ -3,6 +3,7 @@ package com.policy.renewal.controller;
 import com.policy.renewal.model.Policy;
 import com.policy.renewal.service.PolicyReminderService;
 import com.policy.renewal.service.PolicyService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -39,6 +40,7 @@ public class HomeController {
      * @return view name "index"
      */
     @GetMapping("/")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public String home(@RequestParam(name = "window", required = false) Integer window, Model model) {
         Map<String, Long> stats = policyService.getDashboardStats();
 

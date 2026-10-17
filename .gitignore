@@ -21,6 +21,11 @@ target/
 *.log
 logs/
 
+# Environment files with secrets
+.env
+.env.local
+.env.*.local
+
 # Local archives / tools binaries
 jdk-*/
 *maven*/
@@ -39,6 +44,8 @@ Thumbs.db
 # ==============================================================================
 data/*.mv.db
 data/*.trace.db
+data/backups/
+backups/
 # Also exclude any H2 files that land at the project root (e.g. during dev)
 *.mv.db
 *.trace.db
