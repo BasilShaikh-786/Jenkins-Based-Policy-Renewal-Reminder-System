@@ -43,13 +43,13 @@ public class SecurityDataInitializer implements CommandLineRunner {
     @Value("${app.security.initial-admin.username:admin}")
     private String initialAdminUsername;
 
-    @Value("${app.security.initial-admin.password:}")
+    @Value("${app.security.initial-admin.password:admin123}")
     private String initialAdminPassword;
 
-    @Value("${app.security.initial-staff.username:}")
+    @Value("${app.security.initial-staff.username:staff}")
     private String initialStaffUsername;
 
-    @Value("${app.security.initial-staff.password:}")
+    @Value("${app.security.initial-staff.password:staff123}")
     private String initialStaffPassword;
 
     @Value("${app.admin-recovery.enabled:false}")
@@ -146,7 +146,7 @@ public class SecurityDataInitializer implements CommandLineRunner {
         }
 
         String username = initialStaffUsername.trim();
-        if (userRepository.existsByUsername(username)) {
+        if (userRepository.existsByUsernameIgnoreCase(username) || userRepository.existsByRole(Role.STAFF)) {
             return;
         }
 

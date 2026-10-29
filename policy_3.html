@@ -1,0 +1,289 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Policy POL-1121 — Policy Renewal Reminder System</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <!-- Navigation -->
+  <header class="navbar">
+    <div class="nav-container" style="max-width: 1280px;">
+      <a href="/" class="brand-wrapper">
+        <div class="brand-icon">🛡️</div>
+        <div class="brand-text">
+          <h1>PolicyGuard</h1>
+          <span>Renewal Reminder System</span>
+        </div>
+      </a>
+      <nav style="display: flex; align-items: center; gap: 1.5rem;">
+        <ul class="nav-links">
+          <li>
+            <a href="/" class="nav-link">
+              📊 Dashboard
+            </a>
+          </li>
+          <li>
+            <a href="/policies" class="nav-link active">
+              📁 All Policies
+            </a>
+          </li>
+          <li>
+            <a href="/policies/upcoming" class="nav-link">
+              ⏰ Upcoming Renewals
+            </a>
+          </li>
+          <li>
+            <a href="/reminders" class="nav-link">
+              🔔 Reminder Logs
+            </a>
+          </li>
+          <li>
+            <a href="/audit" class="nav-link">
+              📋 Audit Trail
+            </a>
+          </li>
+          <li>
+            <a href="/backups" class="nav-link">
+              💾 Backups
+            </a>
+          </li>
+          <li>
+            <a href="/users" class="nav-link">
+              👥 Users
+            </a>
+          </li>
+          <li>
+            <a href="/policies/new" class="nav-link btn-nav-action">
+              ➕ Add Policy
+            </a>
+          </li>
+        </ul>
+
+        <!-- User Authentication & Profile Strip -->
+        <div style="display: flex; align-items: center; gap: 0.75rem; padding-left: 0.75rem; border-left: 1px solid var(--color-slate-200);">
+          <div style="display: flex; flex-direction: column; align-items: flex-end; font-size: 0.8rem; line-height: 1.2;">
+            <span style="font-weight: 700; color: var(--color-slate-800);">admin</span>
+            <span class="badge badge-urgent" style="font-size: 0.65rem; padding: 0.1rem 0.4rem; margin-top: 0.15rem;">ADMIN</span>
+            
+          </div>
+          <form action="/logout" method="post" style="margin: 0;"><input type="hidden" name="_csrf" value="HVrxasUYI7-Af6gzkBS7LBRrx9hvkL0nyHIDZgm0Vt0_YcXyf2_JXKchE9utG5oE9DmPGCdZ6uBdpoQK-BY1UmuHZbxeBfbA"/>
+            <button type="submit" id="btn-logout" class="btn btn-outline btn-sm" style="font-size: 0.8rem; padding: 0.25rem 0.6rem;" title="Sign out of PolicyGuard">
+              Logout
+            </button>
+          </form>
+        </div>
+
+        
+      </nav>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div>
+    
+    
+  </div>
+
+    <div class="page-header">
+      <div class="page-title">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <h2>Policy POL-1121</h2>
+          <span class="badge badge-active">ACTIVE</span>
+        </div>
+        <p>Comprehensive record view for sxdd</p>
+      </div>
+
+      <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <a href="/policies" class="btn btn-outline">&larr; Directory</a>
+        <a href="/policies/3/edit" class="btn btn-outline">✏️ Edit</a>
+        <form action="/policies/3/renew" method="post" style="display:inline;"><input type="hidden" name="_csrf" value="HVrxasUYI7-Af6gzkBS7LBRrx9hvkL0nyHIDZgm0Vt0_YcXyf2_JXKchE9utG5oE9DmPGCdZ6uBdpoQK-BY1UmuHZbxeBfbA"/>
+          <button type="submit" class="btn btn-success" onclick="return confirm('Are you sure you want to mark this policy as RENEWED?');">
+            🔄 Mark as Renewed
+          </button>
+        </form>
+        <form action="/policies/3/delete" method="post" style="display:inline;"><input type="hidden" name="_csrf" value="HVrxasUYI7-Af6gzkBS7LBRrx9hvkL0nyHIDZgm0Vt0_YcXyf2_JXKchE9utG5oE9DmPGCdZ6uBdpoQK-BY1UmuHZbxeBfbA"/>
+          <button type="submit" class="btn btn-outline" style="color: #dc2626; border-color: #fecaca;" 
+                  onclick="return confirm('Are you sure you want to permanently delete this policy? This action cannot be undone.');">
+            🗑️ Delete Policy
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Main Detail Card -->
+    <div class="card" style="margin-bottom: 2rem;">
+      <div class="card-header">
+        <h3>📋 Policy Specifications & Dual Period View</h3>
+        <span class="tag-type">Health Insurance</span>
+      </div>
+      <div class="card-body">
+
+        <!-- ===============================================================
+             SECTION A: Customer Relationship Period (Historical Tenure)
+             Requirement 1.A
+             =============================================================== -->
+        <div style="margin-bottom: 1.75rem; background: #faf5ff; border: 1px solid #e9d5ff; border-radius: var(--radius-md); padding: 1.25rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+            <h4 style="color: #6b21a8; font-size: 1rem; margin: 0; display: flex; align-items: center; gap: 0.4rem;">
+              <span>⏳ Customer Relationship Period (Historical Tenure)</span>
+              <span class="badge badge-tenure" style="font-size: 0.75rem;">Requirement 1.A</span>
+            </h4>
+            <span style="font-size: 0.75rem; color: #7e22ce; font-weight: 600;">
+              ⚠️ Historical duration — NOT used for calculating new policy premium
+            </span>
+          </div>
+
+          <div class="detail-grid">
+            <div class="detail-item">
+              <span class="detail-label">Customer Full Name</span>
+              <span class="detail-value">sxdd</span>
+            </div>
+
+            <div class="detail-item">
+              <span class="detail-label">Customer Email Address</span>
+              <span class="detail-value">dhwuc@gmail.com</span>
+            </div>
+
+            <div class="detail-item">
+              <span class="detail-label">Original Policy Inception Date</span>
+              <span class="detail-value">27 October 2026</span>
+              <small style="font-size: 0.75rem; color: var(--color-slate-500); display: block;">Customer relationship inception</small>
+            </div>
+
+            <div class="detail-item">
+              <span class="detail-label">Calculated Relationship Duration</span>
+              <span class="detail-value" style="color: #6b21a8; font-weight: 700;">
+                <span class="badge badge-tenure" style="font-size: 0.95rem; padding: 0.35rem 0.85rem;">2 days (&lt; 1 month)</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Historical Coverage Period Inconsistency Alert (Requirement 9) -->
+        
+
+        <!-- ===============================================================
+             SECTION B: Insurance Coverage / Purchase Period
+             Requirement 1.B
+             =============================================================== -->
+        <div style="margin-bottom: 1.75rem; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: var(--radius-md); padding: 1.25rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+            <h4 style="color: #0369a1; font-size: 1rem; margin: 0; display: flex; align-items: center; gap: 0.4rem;">
+              <span>🛡️ Insurance Coverage / Purchase Period (Selected Term)</span>
+              <span class="badge badge-duration" style="font-size: 0.75rem;">Requirement 1.B</span>
+            </h4>
+            <span style="font-size: 0.75rem; color: #0284c7; font-weight: 600;">
+              Active coverage duration requested by customer
+            </span>
+          </div>
+
+          <div class="detail-grid">
+            <div class="detail-item">
+              <span class="detail-label">Insurance Classification</span>
+              <span class="detail-value">Health</span>
+            </div>
+
+            <div class="detail-item">
+              <span class="detail-label">Premium Amount</span>
+              <span class="detail-value" style="color: var(--color-primary); font-size: 1.25rem; font-weight: 800;">₹ 3,887.33</span>
+            </div>
+
+            <div class="detail-item">
+              <span class="detail-label">Requested Coverage Duration</span>
+              <span class="detail-value">
+                <span class="badge badge-duration" style="font-size: 0.95rem; padding: 0.35rem 0.85rem;">2 MONTHS (Derived Span)</span>
+                <small style="display:block; color: #b45309; font-size: 0.75rem; margin-top: 0.2rem;">
+                  ⚠️ Unrecorded in DB; derived from term span
+                </small>
+              </span>
+            </div>
+
+            <div class="detail-item">
+              <span class="detail-label">Current Coverage Start Date</span>
+              <span class="detail-value">27 October 2026</span>
+              <small style="font-size: 0.75rem; color: var(--color-slate-500); display: block;">Start of active / current term</small>
+            </div>
+
+            <div class="detail-item">
+              <span class="detail-label">Current Coverage Expiry Date</span>
+              <span class="detail-value" style="color: #b45309; font-weight: 700;">31 December 2026</span>
+              <small style="font-size: 0.75rem; color: var(--color-slate-500); display: block;">End of active / current term</small>
+            </div>
+
+            <div class="detail-item">
+              <span class="detail-label">Derived Policy Status</span>
+              <span class="detail-value">
+                <span class="badge badge-active">ACTIVE</span>
+                
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===============================================================
+             SECTION D: System Audit & Administrative Remarks
+             =============================================================== -->
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="detail-label">Database Record ID</span>
+            <span class="detail-value">#3</span>
+          </div>
+
+          <div class="detail-item">
+            <span class="detail-label">Stored Status Flag</span>
+            <span class="detail-value">NONE (Dynamically Derived)</span>
+          </div>
+
+          <div class="detail-item">
+            <span class="detail-label">Record Inception Timestamp</span>
+            <span class="detail-value" style="font-size: 0.9rem; color: var(--color-slate-500);">2026-10-26 09:29:48</span>
+          </div>
+
+          <div class="detail-item">
+            <span class="detail-label">Last Audit Update</span>
+            <span class="detail-value" style="font-size: 0.9rem; color: var(--color-slate-500);">2026-10-26 09:29:48</span>
+          </div>
+        </div>
+
+        <!-- Notes section -->
+        <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--color-slate-200);">
+          <span class="detail-label">Administrative Notes & Rider Remarks</span>
+          <p style="margin-top: 0.4rem; color: var(--color-slate-700); font-size: 0.95rem; white-space: pre-wrap;">No administrative notes recorded for this policy.</p>
+        </div>
+
+        <!-- Reminder History Section -->
+        <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--color-slate-200);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h4 style="font-size: 1.05rem; color: var(--color-dark);">🔔 Renewal Reminder Notification History</h4>
+            <span style="font-size: 0.8rem; color: var(--color-slate-500);">Automated audit records for this policy</span>
+          </div>
+
+          <div style="color: var(--color-slate-400); font-size: 0.9rem; font-style: italic;">
+            No reminder notifications recorded for this policy yet.
+          </div>
+
+          
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-content">
+      <div>
+        <strong>Jenkins-Based Policy Renewal Reminder System</strong> &bull; Final Year Engineering Project
+      </div>
+      <div>
+        Developed by <strong>Basil Shaikh</strong> (23102C0026 &bull; CMPN C)
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
+

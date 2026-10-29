@@ -256,4 +256,105 @@ class PolicyServiceTest {
         assertEquals(3L, stats.get("expiring30Days"));
         assertEquals(4L, stats.get("active"));
     }
+
+    @Test
+    @DisplayName("Issue 2: Saving a 12-month policy with consistent dates succeeds")
+    void testSaveConsistent12MonthPolicySucceeds() {
+        LocalDate start = LocalDate.of(2024, 12, 19);
+        LocalDate expiry = LocalDate.of(2025, 12, 18);
+        Policy policy = createSamplePolicy("POL-CONSISTENT-12", start, expiry);
+        policy.setCoverageDurationValue(12);
+        policy.setCoverageDurationUnit("MONTHS");
+
+        when(policyRepository.findByPolicyNumber("POL-CONSISTENT-12")).thenReturn(Optional.empty());
+        when(policyRepository.save(any(Policy.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Policy saved = policyService.save(policy);
+        assertNotNull(saved);
+        assertTrue(saved.isCoveragePeriodConsistent());
+        assertFalse(saved.isHistoricalTermReviewRequired());
+    }
+
+    @Test
+    @DisplayName("Issue 2: Saving a 12-month policy spanning 22 months throws IllegalArgumentException")
+    void testSaveInconsistentCoverageDurationThrowsException() {
+        LocalDate start = LocalDate.of(2024, 12, 19);
+        LocalDate expiry = LocalDate.of(2026, 10, 17); // 22 months span
+        Policy policy = createSamplePolicy("POL-INCONSISTENT-22", start, expiry);
+        policy.setCoverageDurationValue(12);
+        policy.setCoverageDurationUnit("MONTHS");
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> {
+            policyService.save(policy);
+        });
+
+        assertTrue(ex.getMessage().contains("Coverage dates are inconsistent with requested duration"));
+        verify(policyRepository, never()).save(any(Policy.class));
+    }
+
+    @Test
+    @DisplayName("Issue 2: markAsRenewed preserves original inception date in customerSinceDate")
+    void testMarkAsRenewedPreservesCustomerSinceDate() {
+        LocalDate inception = LocalDate.of(2024, 12, 19);
+        LocalDate expiry = LocalDate.of(2025, 12, 18);
+        Policy policy = createSamplePolicy("POL-RENEW-INCEPTION", inception, expiry);
+        policy.setId(10L);
+        policy.setCustomerSinceDate(null); // Initially null
+
+        when(policyRepository.findById(10L)).thenReturn(Optional.of(policy));
+        when(policyRepository.save(any(Policy.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        policyService.markAsRenewed(10L);
+
+        assertEquals(PolicyService.STATUS_RENEWED, policy.getRenewalStatus());
+        assertEquals(inception, policy.getCustomerSinceDate(), "Original inception date must be preserved in customerSinceDate");
+    }
+
+    @Test
+    @DisplayName("Issue 2: Historical record with 22 months span and null duration is flagged for review")
+    void testHistoricalRecordFlaggedForReview() {
+        LocalDate start = LocalDate.of(2024, 12, 19);
+        LocalDate expiry = LocalDate.of(2026, 10, 17);
+        Policy policy = createSamplePolicy("POL-HISTORICAL", start, expiry);
+        policy.setCoverageDurationValue(null);
+        policy.setRenewalStatus("RENEWED");
+
+        assertTrue(policy.isHistoricalTermReviewRequired());
+        assertTrue(policy.getCoveragePeriodReviewReason().contains("months"));
+        assertTrue(policy.getCoveragePeriodReviewReason().contains("renewal history"));
+    }
+
+    @Test
+    @DisplayName("Task 1: Short-term renewed policy (e.g. 13 days) is NOT falsely flagged for review and shows derived days")
+    void testShortTermRenewedPolicyNotFlaggedForReview() {
+        LocalDate start = LocalDate.of(2026, 10, 26);
+        LocalDate expiry = LocalDate.of(2026, 11, 7); // 13 days term
+        Policy policy = createSamplePolicy("POL-232", start, expiry);
+        policy.setCoverageDurationValue(null);
+        policy.setRenewalStatus("RENEWED");
+
+        assertFalse(policy.isHistoricalTermReviewRequired(), "13-day term policy must NOT be falsely flagged for multi-term review");
+        assertEquals("13 DAYS (Derived from Term Dates)", policy.getFormattedCoverageDuration());
+        assertNull(policy.getEffectiveCustomerSinceDate(), "Unrecorded inception date on renewed policy must be null");
+
+        String tenure = policyService.calculateCustomerRelationshipPeriod(policy);
+        assertEquals("Unavailable — original inception date not recorded", tenure);
+    }
+
+    @Test
+    @DisplayName("Task 1: Demo policy POL-1005 (Renewed Home with separated inception) evaluates correctly")
+    void testDemoPolicyRenewedEvaluation() {
+        LocalDate inception = LocalDate.of(2024, 11, 15);
+        LocalDate start = LocalDate.of(2025, 11, 15);
+        LocalDate expiry = LocalDate.of(2026, 11, 15);
+        Policy policy = createSamplePolicy("POL-1005", start, expiry);
+        policy.setCustomerSinceDate(inception);
+        policy.setCoverageDurationValue(12);
+        policy.setCoverageDurationUnit("MONTHS");
+        policy.setRenewalStatus("RENEWED");
+
+        assertFalse(policy.isHistoricalTermReviewRequired());
+        assertEquals("12 MONTHS", policy.getFormattedCoverageDuration());
+        assertEquals(inception, policy.getEffectiveCustomerSinceDate());
+    }
 }

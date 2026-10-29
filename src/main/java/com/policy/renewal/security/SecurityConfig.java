@@ -55,6 +55,7 @@ public class SecurityConfig {
                 // Operational routes — accessible to both ADMIN and STAFF
                 .requestMatchers(HttpMethod.GET, "/", "/policies", "/policies/upcoming").hasAnyRole("ADMIN", "STAFF")
                 .requestMatchers(HttpMethod.POST, "/policies/*/renew").hasAnyRole("ADMIN", "STAFF")
+                .requestMatchers("/api/coverage/**").hasAnyRole("ADMIN", "STAFF")
 
                 // Policy mutations & full customer record — strictly restricted to ADMIN
                 .requestMatchers(HttpMethod.GET, "/policies/new", "/policies/*/edit", "/policies/*").hasRole("ADMIN")

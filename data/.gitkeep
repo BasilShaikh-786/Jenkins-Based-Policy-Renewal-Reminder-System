@@ -1,0 +1,3 @@
+# This file keeps the data/ directory tracked by Git.
+# The actual H2 database files (*.mv.db, *.trace.db) are excluded by .gitignore.
+# Do NOT commit any .mv.db or .trace.db files — they contain customer data.

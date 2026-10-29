@@ -82,7 +82,16 @@
                     POL-1001
                   </span>
                 </td>
-                <td th:text="${policy.customerName}">Customer Name</td>
+                <td>
+                  <div style="font-weight: 600;" th:text="${policy.customerName}">Customer Name</div>
+                  <div style="margin-top: 0.15rem;">
+                    <span class="badge badge-tenure" style="font-size: 0.7rem; padding: 0.1rem 0.45rem;" 
+                          title="Customer Relationship Period (Historical Tenure)"
+                          th:text="'⏳ ' + (${policyService.calculateCustomerRelationshipPeriod(policy).startsWith('Unavailable') ? 'Tenure unrecorded' : policyService.calculateCustomerRelationshipPeriod(policy)})">
+                      ⏳ 3 years
+                    </span>
+                  </div>
+                </td>
                 <td>
                   <span sec:authorize="hasRole('ADMIN')" style="font-size: 0.85rem; color: var(--color-slate-500);"
                         th:text="${policy.customerEmail != null ? policy.customerEmail : '—'}">email@example.com</span>

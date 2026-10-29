@@ -1,0 +1,462 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Audit Trail — Policy Renewal Reminder System</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <!-- Navigation -->
+  <header class="navbar">
+    <div class="nav-container" style="max-width: 1280px;">
+      <a href="/" class="brand-wrapper">
+        <div class="brand-icon">🛡️</div>
+        <div class="brand-text">
+          <h1>PolicyGuard</h1>
+          <span>Renewal Reminder System</span>
+        </div>
+      </a>
+      <nav style="display: flex; align-items: center; gap: 1.5rem;">
+        <ul class="nav-links">
+          <li>
+            <a href="/" class="nav-link">
+              📊 Dashboard
+            </a>
+          </li>
+          <li>
+            <a href="/policies" class="nav-link">
+              📁 All Policies
+            </a>
+          </li>
+          <li>
+            <a href="/policies/upcoming" class="nav-link">
+              ⏰ Upcoming Renewals
+            </a>
+          </li>
+          <li>
+            <a href="/reminders" class="nav-link">
+              🔔 Reminder Logs
+            </a>
+          </li>
+          <li>
+            <a href="/audit" class="nav-link active">
+              📋 Audit Trail
+            </a>
+          </li>
+          <li>
+            <a href="/backups" class="nav-link">
+              💾 Backups
+            </a>
+          </li>
+          <li>
+            <a href="/users" class="nav-link">
+              👥 Users
+            </a>
+          </li>
+          <li>
+            <a href="/policies/new" class="nav-link btn-nav-action">
+              ➕ Add Policy
+            </a>
+          </li>
+        </ul>
+
+        <!-- User Authentication & Profile Strip -->
+        <div style="display: flex; align-items: center; gap: 0.75rem; padding-left: 0.75rem; border-left: 1px solid var(--color-slate-200);">
+          <div style="display: flex; flex-direction: column; align-items: flex-end; font-size: 0.8rem; line-height: 1.2;">
+            <span style="font-weight: 700; color: var(--color-slate-800);">admin</span>
+            <span class="badge badge-urgent" style="font-size: 0.65rem; padding: 0.1rem 0.4rem; margin-top: 0.15rem;">ADMIN</span>
+            
+          </div>
+          <form action="/logout" method="post" style="margin: 0;"><input type="hidden" name="_csrf" value="JhbQaOCTu40f4yeXPYX0Bv7A0-pX3wAK9q8y1RCf4qArjgrSQHTgXNn1jr4ygkKkBajANsmk_ogz7Dknxs4A4XKs1JdI6zy0"/>
+            <button type="submit" id="btn-logout" class="btn btn-outline btn-sm" style="font-size: 0.8rem; padding: 0.25rem 0.6rem;" title="Sign out of PolicyGuard">
+              Logout
+            </button>
+          </form>
+        </div>
+
+        
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+
+    <!-- Flash Alerts -->
+    <div>
+    
+    
+  </div>
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="page-title">
+        <h2>System Audit Trail</h2>
+        <p>Comprehensive, immutable log of administrative operations, policy lifecycle mutations, and security events</p>
+      </div>
+      <div>
+        <span class="badge badge-urgent" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;">
+          ADMIN AUDIT ACCESS
+        </span>
+      </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar" style="margin-bottom: 1.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+      <a href="/audit"
+         class="btn btn-primary btn-sm">
+        All Events
+      </a>
+      <a href="/audit?type=POLICY"
+         class="btn btn-outline btn-sm">
+        📁 Policies
+      </a>
+      <a href="/audit?type=USER"
+         class="btn btn-outline btn-sm">
+        👥 Users
+      </a>
+      <a href="/audit?type=DATABASE"
+         class="btn btn-outline btn-sm">
+        💾 Database & Backups
+      </a>
+      <a href="/audit?type=SECURITY"
+         class="btn btn-outline btn-sm">
+        🔒 Security
+      </a>
+    </div>
+
+    <!-- Audit Records Table -->
+    <div class="card">
+      <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-weight: 700; color: var(--color-slate-800);">
+          Audit Records (<span>19</span>)
+        </span>
+        <span style="font-size: 0.8rem; color: var(--color-slate-500);">
+          Ordered by most recent timestamp
+        </span>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Action</th>
+              <th>Category</th>
+              <th>Target Identifier</th>
+              <th>Performed By</th>
+              <th>Status</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            
+            <tr>
+              <td style="white-space: nowrap; font-size: 0.85rem;">29 Oct 2026, 04:37:22</td>
+              <td>
+                <span class="badge badge-urgent">POLICY_DELETED</span>
+              </td>
+              <td>
+                <span class="badge" style="background: var(--color-slate-100); color: var(--color-slate-700); border: 1px solid var(--color-slate-300);">POLICY</span>
+              </td>
+              <td style="font-weight: 600; font-family: monospace;">TEST-CONSISTENT-888</td>
+              <td style="font-weight: 600;">admin</td>
+              <td>
+                <span class="badge badge-active">SUCCESS</span>
+              </td>
+              <td style="max-width: 320px; font-size: 0.85rem; color: var(--color-slate-700);">Deleted policy TEST-CONSISTENT-888 (Customer: Test Consistent User)</td>
+            </tr>
+            <tr>
+              <td style="white-space: nowrap; font-size: 0.85rem;">29 Oct 2026, 04:37:22</td>
+              <td>
+                <span class="badge badge-active">POLICY_CREATED</span>
+              </td>
+              <td>
+                <span class="badge" style="background: var(--color-slate-100); color: var(--color-slate-700); border: 1px solid var(--color-slate-300);">POLICY</span>
+              </td>
+              <td style="font-weight: 600; font-family: monospace;">TEST-CONSISTENT-888</td>
+              <td style="font-weight: 600;">admin</td>
+              <td>
+                <span class="badge badge-active">SUCCESS</span>
+              </td>
+              <td style="max-width: 320px; font-size: 0.85rem; color: var(--color-slate-700);">Created policy TEST-CONSISTENT-888 for Test Consistent User</td>
+            </tr>
+            <tr>
+              <td style="white-space: nowrap; font-size: 0.85rem;">29 Oct 2026, 03:57:37</td>
+              <td>
+                <span class="badge badge-simulated">ADMIN_PASSWORD_RESET</span>
+              </td>
+              <td>
+                <span class="badge" style="background: var(--color-slate-100); color: var(--color-slate-700); border: 1px solid var(--color-slate-300);">SECURITY</span>
+              </td>
+              <td style="font-weight: 600; font-family: monospace;">admin</td>
+              <td style="font-weight: 600;">CLI_RECOVERY</td>
+              <td>
+                <span class="badge badge-active">SUCCESS</span>
+              </td>
+              <td style="max-width: 320px; font-size: 0.85rem; color: var(--color-slate-700);">Password for user &#39;admin&#39; has been successfully updated.</td>
+            </tr>
+            <tr>
+              <td style="white-space: nowrap; font-size: 0.85rem;">29 Oct 2026, 03:57:26</td>
+              <td>
+                <span class="badge badge-simulated">ADMIN_PASSWORD_RESET</span>
+              </td>
+              <td>
+                <span class="badge" style="background: var(--color-slate-100); color: var(--color-slate-700); border: 1px solid var(--color-slate-300);">SECURITY</span>
+              </td>
+              <td style="font-weight: 600; font-family: monospace;">admin</td>
+              <td style="font-weight: 600;">CLI_RECOVERY</td>
+              <td>
+                <span class="badge badge-active">SUCCESS</span>
+              </td>
+              <td style="max-width: 320px; font-size: 0.85rem; color: var(--color-slate-700);">Password for user &#39;admin&#39; has been successfully updated.</td>
+            </tr>
+            <tr>
+              <td style="white-space: nowrap; font-size: 0.85rem;">29 Oct 2026, 03:57:19</td>
+              <td>
+                <span class="badge badge-simulated">ADMIN_PASSWORD_RESET</span>
+              </td>
+              <td>
+                <span class="badge" style="background: var(--color-slate-100); color: var(--color-slate-700); border: 1px solid var(--color-slate-300);">SECURITY</span>
+              </td>
+              <td style="font-weight: 600; font-family: monospace;">admin</td>
+              <td style="font-weight: 600;">CLI_RECOVERY</td>
+              <td>
+                <span class="badge badge-active">SUCCESS</span>
+              </td>
+              <td style="max-width: 320px; font-size: 0.85rem; color: var(--color-slate-700);">Password for user &#39;admin&#39; has been successfully updated.</td>
+            </tr>
+            <tr>
+              <td style="white-space: nowrap; font-size: 0.85rem;">29 Oct 2026, 03:57:12</td>
+              <td>
+                <span class="badge badge-simulated">ADMIN_PASSWORD_RESET</span>
+              </td>
+              <td>
+                <span class="badge" style="background: var(--color-slate-100); color: var(--color-slate-700); border: 1px solid var(--color-slate-300);">SECURITY</span>
+              </td>
+              <td style="font-weight: 600; font-family: monospace;">admin</td>
+              <td style="font-weight: 600;">CLI_RECOVERY</td>
+              <td>
+                <span class="badge badge-active">SUCCESS</span>
+              </td>
+              <td style="max-width: 320px; font-size: 0.85rem; color: var(--color-slate-700);">Password for user &#39;admin&#39; has been successfully updated.</td>
+            </tr>
+            <tr>
+              <td style="white-space: nowrap; font-size: 0.85rem;">29 Oct 2026, 03:57:06</td>
+              <td>
+                <span class="badge badge-simulated">ADMIN_PASSWORD_RESET</span>
+              </td>
+              <td>
+                <span class="badge" style="background: var(--color-slate-100); color: var(--color-slate-700); border: 1px solid var(--color-slate-300);">SECURITY</span>
+              </td>
+              <td style="font-weight: 600; font-family: monospace;">admin</td>
+              <td style="font-weight: 600;">CLI_RECOVERY</td>
+              <td>
+                <span class="badge badge-active">SUCCESS</span>
+              </td>
+              <td style="max-width: 320px; font-size: 0.85rem; color: var(--color-slate-700);">Password for user &#39;admin&#39; has been successfully updated.</td>
+            </tr>
+            <tr>
+              <td style="white-space: nowrap; font-size: 0.85rem;">29 Oct 2026, 03:57:01</td>
+              <td>
+                <span class="badge badge-simulated">ADMIN_PASSWORD_RESET</span>
+              </td>
+              <td>
+                <span class="badge" style="background: var(--color-slate-100); color: var(--color-slate-700); border: 1px solid var(--color-slate-300);">SECURITY</span>
+              </td>
+              <td style="font-weight: 600; font-family: monospace;">admin</td>
+              <td style="font-weight: 600;">CLI_RECOVERY</td>
+              <td>
+                <span class="badge badge-active">SUCCESS</span>
+              </td>
+              <td style="max-width: 320px; font-size: 0.85rem; color: var(--color-slate-700);">Password for user &#39;admin&#39; has been successfully updated.</td>
+            </tr>
+            <tr>
+              <td style="white-space: nowrap; font-size: 0.85rem;">29 Oct 2026, 03:56:57</td>
+              <td>
+                <span class="badge badge-simulated">ADMIN_PASSWORD_RESET</span>
+              </td>
+              <td>
+                <span class="badge" style="background: var(--color-slate-100); color: var(--color-slate-700); border: 1px solid var(--color-slate-300);">SECURITY</span>
+              </td>
+              <td style="font-weight: 600; font-family: monospace;">admin</td>
+              <td style="font-weight: 600;">CLI_RECOVERY</td>
+              <td>
+                <span class="badge badge-active">SUCCESS</span>
+              </td>
+              <td style="max-width: 320px; font-size: 0.85rem; color: var(--color-slate-700);">Password for user &#39;admin&#39; has been successfully updated.</td>
+            </tr>
+            <tr>
+              <td style="white-space: nowrap; font-size: 0.85rem;">29 Oct 2026, 03:56:52</td>
+              <td>
+                <span class="badge badge-simulated">ADMIN_PASSWORD_RESET</span>
+              </td>
+              <td>
+                <span class="badge" style="background: var(--color-slate-100); color: var(--color-slate-700); border: 1px solid var(--color-slate-300);">SECURITY</span>
+              </td>
+              <td style="font-weight: 600; font-family: monospace;">admin</td>
+              <td style="font-weight: 600;">CLI_RECOVERY</td>
+              <td>
+                <span class="badge badge-active">SUCCESS</span>
+              </td>
+              <td style="max-width: 320px; font-size: 0.85rem; color: var(--color-slate-700);">Password for user &#39;admin&#39; has been successfully updated.</td>
+            </tr>
+            <tr>
+              <td style="white-space: nowrap; font-size: 0.85rem;">28 Oct 2026, 16:03:30</td>
+              <td>
+                <span class="badge badge-simulated">POLICY_RENEWED</span>
+              </td>
+              <td>
+                <span class="badge" style="background: var(--color-slate-100); color: var(--color-slate-700); border: 1px solid var(--color-slate-300);">POLICY</span>
+              </td>
+              <td style="font-weight: 600; font-family: monospace;">POL-232</td>
+              <td style="font-weight: 600;">admin</td>
+              <td>
+                <span class="badge badge-active">SUCCESS</span>
+              </td>
+              <td style="max-width: 320px; font-size: 0.85rem; color: var(--color-slate-700);">Marked policy POL-232 as renewed.</td>
+            </tr>
+            <tr>
+              <td style="white-space: nowrap; font-size: 0.85rem;">28 Oct 2026, 16:01:20</td>
+              <td>
+                <span class="badge badge-active">POLICY_CREATED</span>
+              </td>
+              <td>
+                <span class="badge" style="background: var(--color-slate-100); color: var(--color-slate-700); border: 1px solid var(--color-slate-300);">POLICY</span>
+              </td>
+              <td style="font-weight: 600; font-family: monospace;">POL-1133</td>
+              <td style="font-weight: 600;">admin</td>
+              <td>
+                <span class="badge badge-active">SUCCESS</span>
+              </td>
+              <td style="max-width: 320px; font-size: 0.85rem; color: var(--color-slate-700);">Created policy POL-1133 for jawad shaikh</td>
+            </tr>
+            <tr>
+              <td style="white-space: nowrap; font-size: 0.85rem;">26 Oct 2026, 09:29:48</td>
+              <td>
+                <span class="badge badge-active">POLICY_CREATED</span>
+              </td>
+              <td>
+                <span class="badge" style="background: var(--color-slate-100); color: var(--color-slate-700); border: 1px solid var(--color-slate-300);">POLICY</span>
+              </td>
+              <td style="font-weight: 600; font-family: monospace;">POL-1121</td>
+              <td style="font-weight: 600;">admin</td>
+              <td>
+                <span class="badge badge-active">SUCCESS</span>
+              </td>
+              <td style="max-width: 320px; font-size: 0.85rem; color: var(--color-slate-700);">Created policy POL-1121 for sxdd</td>
+            </tr>
+            <tr>
+              <td style="white-space: nowrap; font-size: 0.85rem;">26 Oct 2026, 08:45:07</td>
+              <td>
+                <span class="badge badge-simulated">BACKUP_VERIFIED</span>
+              </td>
+              <td>
+                <span class="badge" style="background: var(--color-slate-100); color: var(--color-slate-700); border: 1px solid var(--color-slate-300);">DATABASE</span>
+              </td>
+              <td style="font-weight: 600; font-family: monospace;">policyrenewaldb_backup_20261017_180310.zip</td>
+              <td style="font-weight: 600;">admin</td>
+              <td>
+                <span class="badge badge-active">SUCCESS</span>
+              </td>
+              <td style="max-width: 320px; font-size: 0.85rem; color: var(--color-slate-700);">Recovery verification passed. Tables restored: Policies: 1, Users: 1, Reminder Records: 0, Audit Logs: 3</td>
+            </tr>
+            <tr>
+              <td style="white-space: nowrap; font-size: 0.85rem;">26 Oct 2026, 08:33:16</td>
+              <td>
+                <span class="badge badge-active">POLICY_CREATED</span>
+              </td>
+              <td>
+                <span class="badge" style="background: var(--color-slate-100); color: var(--color-slate-700); border: 1px solid var(--color-slate-300);">POLICY</span>
+              </td>
+              <td style="font-weight: 600; font-family: monospace;">POL-232</td>
+              <td style="font-weight: 600;">admin</td>
+              <td>
+                <span class="badge badge-active">SUCCESS</span>
+              </td>
+              <td style="max-width: 320px; font-size: 0.85rem; color: var(--color-slate-700);">Created policy POL-232 for sd</td>
+            </tr>
+            <tr>
+              <td style="white-space: nowrap; font-size: 0.85rem;">17 Oct 2026, 17:36:55</td>
+              <td>
+                <span class="badge badge-simulated">ADMIN_PASSWORD_RESET</span>
+              </td>
+              <td>
+                <span class="badge" style="background: var(--color-slate-100); color: var(--color-slate-700); border: 1px solid var(--color-slate-300);">SECURITY</span>
+              </td>
+              <td style="font-weight: 600; font-family: monospace;">admin</td>
+              <td style="font-weight: 600;">CLI_RECOVERY</td>
+              <td>
+                <span class="badge badge-active">SUCCESS</span>
+              </td>
+              <td style="max-width: 320px; font-size: 0.85rem; color: var(--color-slate-700);">Password for user &#39;admin&#39; has been successfully updated.</td>
+            </tr>
+            <tr>
+              <td style="white-space: nowrap; font-size: 0.85rem;">17 Oct 2026, 12:33:10</td>
+              <td>
+                <span class="badge badge-active">BACKUP_CREATED</span>
+              </td>
+              <td>
+                <span class="badge" style="background: var(--color-slate-100); color: var(--color-slate-700); border: 1px solid var(--color-slate-300);">DATABASE</span>
+              </td>
+              <td style="font-weight: 600; font-family: monospace;">policyrenewaldb_backup_20261017_180310.zip</td>
+              <td style="font-weight: 600;">admin</td>
+              <td>
+                <span class="badge badge-active">SUCCESS</span>
+              </td>
+              <td style="max-width: 320px; font-size: 0.85rem; color: var(--color-slate-700);">Created online database backup archive (1.50 KB)</td>
+            </tr>
+            <tr>
+              <td style="white-space: nowrap; font-size: 0.85rem;">17 Oct 2026, 12:20:42</td>
+              <td>
+                <span class="badge badge-simulated">POLICY_RENEWED</span>
+              </td>
+              <td>
+                <span class="badge" style="background: var(--color-slate-100); color: var(--color-slate-700); border: 1px solid var(--color-slate-300);">POLICY</span>
+              </td>
+              <td style="font-weight: 600; font-family: monospace;">POL-1122</td>
+              <td style="font-weight: 600;">admin</td>
+              <td>
+                <span class="badge badge-active">SUCCESS</span>
+              </td>
+              <td style="max-width: 320px; font-size: 0.85rem; color: var(--color-slate-700);">Marked policy POL-1122 as renewed.</td>
+            </tr>
+            <tr>
+              <td style="white-space: nowrap; font-size: 0.85rem;">17 Oct 2026, 12:20:21</td>
+              <td>
+                <span class="badge badge-active">POLICY_CREATED</span>
+              </td>
+              <td>
+                <span class="badge" style="background: var(--color-slate-100); color: var(--color-slate-700); border: 1px solid var(--color-slate-300);">POLICY</span>
+              </td>
+              <td style="font-weight: 600; font-family: monospace;">POL-1122</td>
+              <td style="font-weight: 600;">admin</td>
+              <td>
+                <span class="badge badge-active">SUCCESS</span>
+              </td>
+              <td style="max-width: 320px; font-size: 0.85rem; color: var(--color-slate-700);">Created policy POL-1122 for Basil SHaikh</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-content">
+      <div>
+        <strong>Jenkins-Based Policy Renewal Reminder System</strong> &bull; Final Year Engineering Project
+      </div>
+      <div>
+        Developed by <strong>Basil Shaikh</strong> (23102C0026 &bull; CMPN C)
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
+

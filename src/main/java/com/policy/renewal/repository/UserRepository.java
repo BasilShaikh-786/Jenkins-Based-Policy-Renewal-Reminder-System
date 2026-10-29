@@ -25,12 +25,28 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByUsername(String username);
 
     /**
+     * Finds a user by username ignoring case (prevents login failure from case mismatches).
+     *
+     * @param username the username to look up
+     * @return an {@link Optional} containing the user if found, or empty
+     */
+    Optional<User> findByUsernameIgnoreCase(String username);
+
+    /**
      * Checks if a user already exists with the given username.
      *
      * @param username the username to check
      * @return true if a user exists with this username
      */
     boolean existsByUsername(String username);
+
+    /**
+     * Checks if a user already exists with the given username (case-insensitive).
+     *
+     * @param username the username to check
+     * @return true if a user exists with this username
+     */
+    boolean existsByUsernameIgnoreCase(String username);
 
     /**
      * Checks if any user exists with the given role.

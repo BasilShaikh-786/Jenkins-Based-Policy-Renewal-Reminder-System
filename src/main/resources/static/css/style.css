@@ -677,6 +677,20 @@ a:hover {
   gap: 0.5rem;
 }
 
+/* Period Badges (Customer Tenure & Coverage Duration) */
+.badge-tenure {
+  background-color: #f3e8ff;
+  color: #6b21a8;
+  border-color: #e9d5ff;
+}
+
+.badge-duration {
+  background-color: #e0f2fe;
+  color: #0369a1;
+  border-color: #bae6fd;
+}
+
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .nav-container {

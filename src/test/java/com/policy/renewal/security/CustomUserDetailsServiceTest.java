@@ -40,7 +40,7 @@ class CustomUserDetailsServiceTest {
     @DisplayName("loadUserByUsername returns UserDetails with ROLE_ADMIN authority for ADMIN user")
     void testLoadUserByUsernameAdmin() {
         User admin = new User("admin", "$2a$10$encodedPasswordHash", "Admin Name", "admin@example.com", Role.ADMIN);
-        when(userRepository.findByUsername("admin")).thenReturn(Optional.of(admin));
+        when(userRepository.findByUsernameIgnoreCase("admin")).thenReturn(Optional.of(admin));
 
         UserDetails details = userDetailsService.loadUserByUsername("admin");
 
@@ -58,10 +58,22 @@ class CustomUserDetailsServiceTest {
     }
 
     @Test
+    @DisplayName("loadUserByUsername handles case-insensitivity and trims whitespace")
+    void testLoadUserByUsernameCaseInsensitiveAndTrimming() {
+        User admin = new User("admin", "$2a$10$encodedPasswordHash", "Admin Name", "admin@example.com", Role.ADMIN);
+        when(userRepository.findByUsernameIgnoreCase("Admin")).thenReturn(Optional.of(admin));
+
+        UserDetails details = userDetailsService.loadUserByUsername("  Admin  ");
+
+        assertNotNull(details);
+        assertEquals("admin", details.getUsername());
+    }
+
+    @Test
     @DisplayName("loadUserByUsername returns UserDetails with ROLE_STAFF authority for STAFF user")
     void testLoadUserByUsernameStaff() {
         User staff = new User("staff1", "$2a$10$staffEncodedPassword", "Staff Member", "staff@example.com", Role.STAFF);
-        when(userRepository.findByUsername("staff1")).thenReturn(Optional.of(staff));
+        when(userRepository.findByUsernameIgnoreCase("staff1")).thenReturn(Optional.of(staff));
 
         UserDetails details = userDetailsService.loadUserByUsername("staff1");
 
@@ -75,9 +87,18 @@ class CustomUserDetailsServiceTest {
     @Test
     @DisplayName("loadUserByUsername throws UsernameNotFoundException when user does not exist")
     void testLoadUserByUsernameNotFound() {
-        when(userRepository.findByUsername("ghost")).thenReturn(Optional.empty());
+        when(userRepository.findByUsernameIgnoreCase("ghost")).thenReturn(Optional.empty());
 
         assertThrows(UsernameNotFoundException.class, () ->
                 userDetailsService.loadUserByUsername("ghost"));
+    }
+
+    @Test
+    @DisplayName("loadUserByUsername throws UsernameNotFoundException when username is null or blank")
+    void testLoadUserByUsernameNullOrBlank() {
+        assertThrows(UsernameNotFoundException.class, () ->
+                userDetailsService.loadUserByUsername(null));
+        assertThrows(UsernameNotFoundException.class, () ->
+                userDetailsService.loadUserByUsername("   "));
     }
 }
