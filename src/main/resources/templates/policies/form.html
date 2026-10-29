@@ -12,7 +12,7 @@
     <div class="page-header">
       <div class="page-title">
         <h2 th:text="${isEdit} ? 'Edit Policy — ' + ${policy.policyNumber} : 'Register New Insurance Policy'">Register Policy</h2>
-        <p th:text="${isEdit} ? 'Update existing policy details and schedule' : 'Fill in the insurance agreement parameters below'"></p>
+        <p th:text="${isEdit} ? 'Update existing policy details, coverage period, and schedule' : 'Fill in the insurance agreement parameters, coverage duration, and policy schedule below'"></p>
       </div>
       <div>
         <a th:href="${isEdit} ? @{'/policies/' + ${policy.id}} : @{/policies}" class="btn btn-outline">&larr; Back</a>
@@ -20,7 +20,7 @@
     </div>
 
     <!-- Form Card -->
-    <div class="card" style="max-width: 800px; margin: 0 auto 2rem;">
+    <div class="card" style="max-width: 900px; margin: 0 auto 2rem;">
       <div class="card-header">
         <h3 th:text="${isEdit} ? '✏️ Modify Policy Information' : '📝 Policy Enrollment Form'">Policy Form</h3>
       </div>
@@ -33,9 +33,16 @@
 
         <form th:action="${isEdit} ? @{'/policies/' + ${policy.id}} : @{/policies}" 
               th:object="${policy}" 
-              method="post" novalidate>
+              method="post" id="policyForm" novalidate>
 
-          <div class="form-grid">
+          <!-- ===============================================================
+               SECTION 1: Customer Relationship Period (Historical Tenure)
+               =============================================================== -->
+          <h4 style="color: var(--color-dark); font-size: 1.05rem; margin-bottom: 0.75rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--color-slate-200);">
+            1. Customer Relationship Period (Historical Tenure)
+          </h4>
+
+          <div class="form-grid" style="margin-bottom: 1.5rem;">
 
             <!-- Policy Number -->
             <div class="form-group">
@@ -46,23 +53,6 @@
                      class="form-control" th:classappend="${#fields.hasErrors('policyNumber')} ? 'is-invalid' : ''"
                      placeholder="e.g. POL-1042">
               <div class="form-feedback" th:if="${#fields.hasErrors('policyNumber')}" th:errors="*{policyNumber}"></div>
-            </div>
-
-            <!-- Policy Type -->
-            <div class="form-group">
-              <label for="policyType" class="form-label">
-                Policy Type <span class="required">*</span>
-              </label>
-              <select id="policyType" th:field="*{policyType}" 
-                      class="form-control" th:classappend="${#fields.hasErrors('policyType')} ? 'is-invalid' : ''">
-                <option value="">-- Select Policy Type --</option>
-                <option value="Health">Health Insurance</option>
-                <option value="Life">Life Insurance</option>
-                <option value="Vehicle">Vehicle / Auto Insurance</option>
-                <option value="Home">Home & Property</option>
-                <option value="Travel">Travel Shield</option>
-              </select>
-              <div class="form-feedback" th:if="${#fields.hasErrors('policyType')}" th:errors="*{policyType}"></div>
             </div>
 
             <!-- Customer Name -->
@@ -87,30 +77,128 @@
               <div class="form-feedback" th:if="${#fields.hasErrors('customerEmail')}" th:errors="*{customerEmail}"></div>
             </div>
 
-            <!-- Start Date -->
+            <!-- Customer Since Date (Requirement 1.A) -->
+            <div class="form-group">
+              <label for="customerSinceDate" class="form-label">
+                Original Policy Inception Date (Customer Since)
+              </label>
+              <input type="date" id="customerSinceDate" th:field="*{customerSinceDate}" 
+                     class="form-control" onchange="updateRelationshipPeriodDisplay()">
+              <small style="color: var(--color-slate-500); display: block; margin-top: 0.2rem;">
+                Historical relationship inception date. Defaults to policy start date if left empty.
+              </small>
+            </div>
+
+            <!-- Historical Tenure Indicator Badge (Requirement 1.A) -->
+            <div class="form-group form-group-full">
+              <div style="background-color: #faf5ff; border: 1px solid #e9d5ff; border-radius: var(--radius-sm); padding: 0.75rem 1rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+                <div>
+                  <span style="font-weight: 700; color: #6b21a8; font-size: 0.85rem;">⏳ Customer Relationship Period:</span>
+                  <span id="relationshipPeriodDisplay" class="badge badge-tenure" style="margin-left: 0.5rem; font-size: 0.85rem;"
+                        th:text="${customerRelationshipPeriod != null ? customerRelationshipPeriod : 'Calculated automatically from inception date'}">
+                    3 years
+                  </span>
+                </div>
+                <div style="font-size: 0.75rem; color: #7e22ce;">
+                  ⚠️ Historical tenure only — NOT used for calculating new policy premium amount.
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- ===============================================================
+               SECTION 2: Insurance Coverage Period (Selected Term)
+               =============================================================== -->
+          <h4 style="color: var(--color-dark); font-size: 1.05rem; margin-bottom: 0.75rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--color-slate-200);">
+            2. Insurance Coverage Period (Selected Term)
+          </h4>
+
+          <div class="form-grid" style="margin-bottom: 1.5rem;">
+
+            <!-- Policy Type / Category -->
+            <div class="form-group">
+              <label for="policyType" class="form-label">
+                Insurance Category <span class="required">*</span>
+              </label>
+              <select id="policyType" th:field="*{policyType}" 
+                      class="form-control" th:classappend="${#fields.hasErrors('policyType')} ? 'is-invalid' : ''">
+                <option value="">-- Select Policy Type --</option>
+                <option value="Health">Health Insurance</option>
+                <option value="Life">Life Insurance</option>
+                <option value="Vehicle">Vehicle / Auto Insurance</option>
+                <option value="Home">Home & Property</option>
+                <option value="Travel">Travel Shield</option>
+              </select>
+              <div class="form-feedback" th:if="${#fields.hasErrors('policyType')}" th:errors="*{policyType}"></div>
+            </div>
+
+            <!-- Requested Duration Value (Requirement 1.B) -->
+            <div class="form-group">
+              <label for="coverageDurationValue" class="form-label">
+                Requested Coverage Duration <span class="required">*</span>
+              </label>
+              <div style="display: flex; gap: 0.5rem;">
+                <input type="number" id="coverageDurationValue" th:field="*{coverageDurationValue}" min="1" 
+                       class="form-control" style="flex: 1;" placeholder="e.g. 12" onchange="autoCalculateExpiryDate()">
+                <select id="coverageDurationUnit" th:field="*{coverageDurationUnit}" class="form-control" style="width: 130px;" onchange="autoCalculateExpiryDate()">
+                  <option value="MONTHS">Months</option>
+                  <option value="YEARS">Years</option>
+                  <option value="DAYS">Days</option>
+                </select>
+              </div>
+              <small style="color: var(--color-slate-500); display: block; margin-top: 0.2rem;">
+                How long the customer wants coverage for (e.g. 12 Months, 2 Years).
+              </small>
+            </div>
+
+            <!-- Current Coverage Start Date -->
             <div class="form-group">
               <label for="startDate" class="form-label">
-                Start Date <span class="required">*</span>
+                Current Coverage Start Date <span class="required">*</span>
               </label>
               <input type="date" id="startDate" th:field="*{startDate}" 
-                     class="form-control" th:classappend="${#fields.hasErrors('startDate')} ? 'is-invalid' : ''">
+                     class="form-control" th:classappend="${#fields.hasErrors('startDate')} ? 'is-invalid' : ''"
+                     onchange="autoCalculateExpiryDate(); updateRelationshipPeriodDisplay();">
+              <small style="color: var(--color-slate-500); display: block; margin-top: 0.2rem;">
+                Start date of the active/current term (or renewed term).
+              </small>
               <div class="form-feedback" th:if="${#fields.hasErrors('startDate')}" th:errors="*{startDate}"></div>
             </div>
 
-            <!-- Expiry Date -->
+            <!-- Current Coverage Expiry Date -->
             <div class="form-group">
               <label for="expiryDate" class="form-label">
-                Expiry Date <span class="required">*</span>
+                Current Coverage Expiry Date <span class="required">*</span>
               </label>
-              <input type="date" id="expiryDate" th:field="*{expiryDate}" 
-                     class="form-control" th:classappend="${#fields.hasErrors('expiryDate')} ? 'is-invalid' : ''">
+              <div style="display: flex; gap: 0.5rem;">
+                <input type="date" id="expiryDate" th:field="*{expiryDate}" 
+                       class="form-control" th:classappend="${#fields.hasErrors('expiryDate')} ? 'is-invalid' : ''">
+                <button type="button" class="btn btn-outline btn-sm" onclick="autoCalculateExpiryDate()" title="Calculate from Start Date & Duration">
+                  ⚡ Auto
+                </button>
+              </div>
+              <small style="color: var(--color-slate-500); display: block; margin-top: 0.2rem;">
+                End date of current term. Use ⚡ Auto to calculate from requested duration.
+              </small>
               <div class="form-feedback" th:if="${#fields.hasErrors('expiryDate')}" th:errors="*{expiryDate}"></div>
             </div>
 
-            <!-- Premium Amount -->
+          </div>
+
+          <!-- ===============================================================
+               SECTION 3: Policy Premium & Additional Details
+               =============================================================== -->
+          <h4 style="color: var(--color-dark); font-size: 1.05rem; margin-top: 1.5rem; margin-bottom: 0.75rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--color-slate-200);">
+            3. Premium & Additional Details
+          </h4>
+
+          <div class="form-grid" style="margin-bottom: 1.5rem;">
+
+            <!-- Premium Amount (Total) -->
             <div class="form-group">
               <label for="premiumAmount" class="form-label">
-                Annual Premium Amount (₹) <span class="required">*</span>
+                Premium Amount (₹) <span class="required">*</span>
               </label>
               <input type="number" step="0.01" min="0" id="premiumAmount" th:field="*{premiumAmount}" 
                      class="form-control" th:classappend="${#fields.hasErrors('premiumAmount')} ? 'is-invalid' : ''"
@@ -150,6 +238,91 @@
     </div>
   </main>
 
+  <!-- Footer -->
   <footer th:replace="~{fragments/layout :: footer}"></footer>
+
+  <!-- Client Scripts: Customer Tenure & Coverage Duration -->
+  <script th:inline="javascript">
+    function updateRelationshipPeriodDisplay() {
+      const sinceInput = document.getElementById('customerSinceDate');
+      const startInput = document.getElementById('startDate');
+      const display = document.getElementById('relationshipPeriodDisplay');
+
+      const dateStr = sinceInput.value || startInput.value;
+      if (!dateStr) {
+        display.textContent = "Start date not set";
+        return;
+      }
+
+      const inception = new Date(dateStr);
+      const today = new Date();
+      if (today < inception) {
+        display.textContent = "Future Policy (Inception pending)";
+        return;
+      }
+
+      let years = today.getFullYear() - inception.getFullYear();
+      let months = today.getMonth() - inception.getMonth();
+      if (today.getDate() < inception.getDate()) {
+        months--;
+      }
+      if (months < 0) {
+        years--;
+        months += 12;
+      }
+
+      if (years > 0 && months > 0) {
+        display.textContent = years + (years === 1 ? " year, " : " years, ") + months + (months === 1 ? " month" : " months");
+      } else if (years > 0) {
+        display.textContent = years + (years === 1 ? " year" : " years");
+      } else if (months > 0) {
+        display.textContent = months + (months === 1 ? " month" : " months");
+      } else {
+        display.textContent = "< 1 month (New Customer)";
+      }
+    }
+
+    function autoCalculateExpiryDate() {
+      const startDateVal = document.getElementById('startDate').value;
+      const durVal = parseInt(document.getElementById('coverageDurationValue').value, 10);
+      const durUnit = document.getElementById('coverageDurationUnit').value;
+
+      if (!startDateVal || isNaN(durVal) || durVal <= 0) return;
+
+      const url = '/api/coverage/calculate-end-date?startDate=' + encodeURIComponent(startDateVal) + 
+                  '&durationValue=' + durVal + '&durationUnit=' + encodeURIComponent(durUnit);
+
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.expiryDate) {
+            document.getElementById('expiryDate').value = data.expiryDate;
+          }
+        })
+        .catch(err => {
+          // Client-side fallback if server endpoint is unreachable
+          const parts = startDateVal.split('-');
+          const start = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+          let expiry;
+          if (durUnit === 'YEARS') {
+            expiry = new Date(start.getFullYear() + durVal, start.getMonth(), start.getDate() - 1);
+          } else if (durUnit === 'DAYS') {
+            expiry = new Date(start.getFullYear(), start.getMonth(), start.getDate() + durVal - 1);
+          } else {
+            expiry = new Date(start.getFullYear(), start.getMonth() + durVal, start.getDate() - 1);
+          }
+          const yyyy = expiry.getFullYear();
+          const mm = String(expiry.getMonth() + 1).padStart(2, '0');
+          const dd = String(expiry.getDate()).padStart(2, '0');
+          document.getElementById('expiryDate').value = `${yyyy}-${mm}-${dd}`;
+        });
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      updateRelationshipPeriodDisplay();
+    });
+  </script>
+
 </body>
 </html>

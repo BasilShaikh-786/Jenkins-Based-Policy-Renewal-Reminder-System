@@ -31,7 +31,6 @@ public class PolicyController {
 
     private final PolicyService policyService;
     private PolicyReminderService reminderService;
-
     public PolicyController(PolicyService policyService) {
         this.policyService = policyService;
     }
@@ -39,6 +38,12 @@ public class PolicyController {
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     public void setReminderService(PolicyReminderService reminderService) {
         this.reminderService = reminderService;
+    }
+
+    private void populatePeriodAttributes(Model model, Policy policy) {
+        if (policy != null) {
+            model.addAttribute("customerRelationshipPeriod", policyService.calculateCustomerRelationshipPeriod(policy));
+        }
     }
 
     /**
@@ -78,9 +83,13 @@ public class PolicyController {
     @PreAuthorize("hasRole('ADMIN')")
     public String showCreateForm(Model model) {
         if (!model.containsAttribute("policy")) {
-            model.addAttribute("policy", new Policy());
+            Policy policy = new Policy();
+            policy.setCoverageDurationValue(12);
+            policy.setCoverageDurationUnit("MONTHS");
+            model.addAttribute("policy", policy);
         }
         model.addAttribute("isEdit", false);
+        populatePeriodAttributes(model, (Policy) model.getAttribute("policy"));
         return "policies/form";
     }
 
@@ -98,6 +107,7 @@ public class PolicyController {
 
         if (bindingResult.hasErrors()) {
             model.addAttribute("isEdit", false);
+            populatePeriodAttributes(model, policy);
             return "policies/form";
         }
 
@@ -109,6 +119,7 @@ public class PolicyController {
         } catch (IllegalArgumentException ex) {
             model.addAttribute("errorMessage", ex.getMessage());
             model.addAttribute("isEdit", false);
+            populatePeriodAttributes(model, policy);
             return "policies/form";
         }
     }
@@ -128,6 +139,7 @@ public class PolicyController {
         Policy policy = policyOpt.get();
         model.addAttribute("policy", policy);
         model.addAttribute("derivedStatus", policyService.getDerivedStatus(policy));
+        model.addAttribute("customerRelationshipPeriod", policyService.calculateCustomerRelationshipPeriod(policy));
         model.addAttribute("policyService", policyService);
         model.addAttribute("reminderHistory", reminderService != null
                 ? reminderService.getReminderHistoryForPolicy(id)
@@ -148,8 +160,10 @@ public class PolicyController {
             return "error/404";
         }
 
-        model.addAttribute("policy", policyOpt.get());
+        Policy policy = policyOpt.get();
+        model.addAttribute("policy", policy);
         model.addAttribute("isEdit", true);
+        populatePeriodAttributes(model, policy);
         return "policies/form";
     }
 
@@ -170,6 +184,7 @@ public class PolicyController {
 
         if (bindingResult.hasErrors()) {
             model.addAttribute("isEdit", true);
+            populatePeriodAttributes(model, policy);
             return "policies/form";
         }
 
@@ -181,6 +196,7 @@ public class PolicyController {
         } catch (IllegalArgumentException ex) {
             model.addAttribute("errorMessage", ex.getMessage());
             model.addAttribute("isEdit", true);
+            populatePeriodAttributes(model, policy);
             return "policies/form";
         }
     }

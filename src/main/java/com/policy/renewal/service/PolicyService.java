@@ -162,6 +162,54 @@ public class PolicyService {
                     "Expiry date must not be earlier than the start date.");
         }
 
+        // Requirement 1.B & 4: Requested coverage duration validation
+        if (policy.getCoverageDurationValue() != null && policy.getCoverageDurationValue() <= 0) {
+            throw new IllegalArgumentException("Coverage duration must be a positive number.");
+        }
+        if (policy.getCoverageDurationUnit() == null || policy.getCoverageDurationUnit().isBlank()) {
+            policy.setCoverageDurationUnit("MONTHS");
+        }
+
+        // Validate consistency between current coverage dates and requested duration (Requirement 6)
+        if (policy.getStartDate() != null && policy.getExpiryDate() != null
+                && policy.getCoverageDurationValue() != null && !policy.isCoveragePeriodConsistent()) {
+            LocalDate expected = calculateCoverageEndDate(policy.getStartDate(), policy.getCoverageDurationValue(), policy.getCoverageDurationUnit());
+            throw new IllegalArgumentException(
+                    "Coverage dates are inconsistent with requested duration (" +
+                    policy.getCoverageDurationValue() + " " + policy.getCoverageDurationUnit() + "). " +
+                    "A " + policy.getCoverageDurationValue() + " " + policy.getCoverageDurationUnit() +
+                    " term starting on " + policy.getStartDate() + " should expire on or around " + expected +
+                    ", but " + policy.getExpiryDate() + " was entered (" + policy.getActualCoverageMonths() + " months span). " +
+                    "For renewed policies, enter the start date of the current coverage term as Start Date, and keep the original inception date under Customer Since Date.");
+        }
+
+        // Derive coverage duration accurately if not explicitly provided
+        if (policy.getCoverageDurationValue() == null && policy.getStartDate() != null && policy.getExpiryDate() != null) {
+            long days = policy.getActualCoverageDays();
+            if (days < 30) {
+                policy.setCoverageDurationValue((int) days);
+                policy.setCoverageDurationUnit("DAYS");
+            } else {
+                long months = policy.getActualCoverageMonths();
+                policy.setCoverageDurationValue(months > 0 ? (int) months : 12);
+                policy.setCoverageDurationUnit("MONTHS");
+            }
+        }
+
+        // Requirement 1.A: For a brand new policy without prior history, inception date matches policy start date
+        if (policy.getId() == null && policy.getCustomerSinceDate() == null && policy.getStartDate() != null) {
+            policy.setCustomerSinceDate(policy.getStartDate());
+        }
+
+        // Maintain pricing breakdown consistency
+        if (policy.getBasePremium() == null && policy.getPremiumAmount() != null) {
+            // Default 18% GST allocation if not explicitly populated
+            java.math.BigDecimal total = policy.getPremiumAmount();
+            java.math.BigDecimal base = total.divide(new java.math.BigDecimal("1.18"), 2, java.math.RoundingMode.HALF_UP);
+            policy.setBasePremium(base);
+            policy.setTaxAmount(total.subtract(base));
+        }
+
         // BR-01: duplicate policy number check
         // When creating a new policy, id is null. When updating, we exclude the
         // current record from the uniqueness check (a policy can "keep" its own number).
@@ -181,6 +229,85 @@ public class PolicyService {
         return saved;
     }
 
+    // =========================================================================
+    // Requirement 1: Insurance Period Calculations
+    // =========================================================================
+
+    /**
+     * Requirement 1.A — Customer Relationship Period (Historical Policy Tenure)
+     *
+     * <p>Calculates the duration for which the customer has been associated with the policy/insurer,
+     * computed from the customer inception date (or policy start date) to the current date.
+     *
+     * <p>CRITICAL INVARIANT:
+     * This is a historical duration. It must NEVER be used to calculate the amount the customer
+     * needs to pay for a new policy.
+     *
+     * @param policy the policy record
+     * @return a user-friendly formatted duration string, e.g. "3 years" or "2 years, 6 months"
+     */
+    public String calculateCustomerRelationshipPeriod(Policy policy) {
+        if (policy == null) {
+            return "Not Available";
+        }
+        LocalDate inceptionDate = policy.getCustomerSinceDate();
+        if (inceptionDate == null) {
+            if (STATUS_RENEWED.equals(policy.getRenewalStatus())) {
+                return "Unavailable — original inception date not recorded";
+            }
+            inceptionDate = policy.getStartDate();
+        }
+
+        if (inceptionDate == null) {
+            return "Policy start date not available";
+        }
+
+        LocalDate today = LocalDate.now(clock);
+        if (today.isBefore(inceptionDate)) {
+            long days = java.time.temporal.ChronoUnit.DAYS.between(today, inceptionDate);
+            return "Future Policy (Starts in " + days + " days)";
+        }
+
+        java.time.Period period = java.time.Period.between(inceptionDate, today);
+        int years = period.getYears();
+        int months = period.getMonths();
+        int days = period.getDays();
+
+        if (years > 0 && months > 0) {
+            return years + (years == 1 ? " year, " : " years, ") + months + (months == 1 ? " month" : " months");
+        } else if (years > 0) {
+            return years + (years == 1 ? " year" : " years");
+        } else if (months > 0) {
+            return months + (months == 1 ? " month" : " months");
+        } else if (days > 0) {
+            return days + (days == 1 ? " day" : " days") + " (< 1 month)";
+        } else {
+            return "New Customer (Inception Today)";
+        }
+    }
+
+    /**
+     * Requirement 1.B — Calculates coverage end date according to the requested coverage duration.
+     *
+     * @param startDate coverage inception date
+     * @param durationValue positive number of duration units
+     * @param durationUnit duration unit (MONTHS, YEARS, DAYS)
+     * @return calculated expiry date
+     */
+    public LocalDate calculateCoverageEndDate(LocalDate startDate, Integer durationValue, String durationUnit) {
+        if (startDate == null || durationValue == null || durationValue <= 0) {
+            return null;
+        }
+        String unit = (durationUnit != null ? durationUnit.trim().toUpperCase() : "MONTHS");
+        if (unit.startsWith("DAY")) {
+            return startDate.plusDays(durationValue);
+        } else if (unit.startsWith("YEAR")) {
+            return startDate.plusYears(durationValue).minusDays(1);
+        } else {
+            return startDate.plusMonths(durationValue).minusDays(1);
+        }
+    }
+
     /**
      * Marks an existing policy as Renewed.
      *
@@ -196,6 +323,12 @@ public class PolicyService {
         Policy policy = policyRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException(
                         "Policy not found with ID: " + id));
+
+        // Requirement 5: Preserve original inception date before marking as renewed
+        if (policy.getCustomerSinceDate() == null && policy.getStartDate() != null) {
+            policy.setCustomerSinceDate(policy.getStartDate());
+        }
+
         policy.setRenewalStatus(STATUS_RENEWED);
         Policy saved = policyRepository.save(policy);
         if (auditLogService != null) {

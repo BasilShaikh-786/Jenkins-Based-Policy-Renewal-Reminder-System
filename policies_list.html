@@ -1,0 +1,376 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>All Policies — Policy Renewal Reminder System</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <!-- Navigation -->
+  <header class="navbar">
+    <div class="nav-container" style="max-width: 1280px;">
+      <a href="/" class="brand-wrapper">
+        <div class="brand-icon">🛡️</div>
+        <div class="brand-text">
+          <h1>PolicyGuard</h1>
+          <span>Renewal Reminder System</span>
+        </div>
+      </a>
+      <nav style="display: flex; align-items: center; gap: 1.5rem;">
+        <ul class="nav-links">
+          <li>
+            <a href="/" class="nav-link">
+              📊 Dashboard
+            </a>
+          </li>
+          <li>
+            <a href="/policies" class="nav-link active">
+              📁 All Policies
+            </a>
+          </li>
+          <li>
+            <a href="/policies/upcoming" class="nav-link">
+              ⏰ Upcoming Renewals
+            </a>
+          </li>
+          <li>
+            <a href="/reminders" class="nav-link">
+              🔔 Reminder Logs
+            </a>
+          </li>
+          <li>
+            <a href="/audit" class="nav-link">
+              📋 Audit Trail
+            </a>
+          </li>
+          <li>
+            <a href="/backups" class="nav-link">
+              💾 Backups
+            </a>
+          </li>
+          <li>
+            <a href="/users" class="nav-link">
+              👥 Users
+            </a>
+          </li>
+          <li>
+            <a href="/policies/new" class="nav-link btn-nav-action">
+              ➕ Add Policy
+            </a>
+          </li>
+        </ul>
+
+        <!-- User Authentication & Profile Strip -->
+        <div style="display: flex; align-items: center; gap: 0.75rem; padding-left: 0.75rem; border-left: 1px solid var(--color-slate-200);">
+          <div style="display: flex; flex-direction: column; align-items: flex-end; font-size: 0.8rem; line-height: 1.2;">
+            <span style="font-weight: 700; color: var(--color-slate-800);">admin</span>
+            <span class="badge badge-urgent" style="font-size: 0.65rem; padding: 0.1rem 0.4rem; margin-top: 0.15rem;">ADMIN</span>
+            
+          </div>
+          <form action="/logout" method="post" style="margin: 0;"><input type="hidden" name="_csrf" value="XER3fuL4pc4TbdrLOLu9JRVZylyS9ddUynzBWrXr1P9akslybXFASYTKlKs-W-n_WZaJQXdt52WgweJ5-UzzbNaN5Ztvq_hL"/>
+            <button type="submit" id="btn-logout" class="btn btn-outline btn-sm" style="font-size: 0.8rem; padding: 0.25rem 0.6rem;" title="Sign out of PolicyGuard">
+              Logout
+            </button>
+          </form>
+        </div>
+
+        
+      </nav>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div>
+    
+    
+  </div>
+
+    <div class="page-header">
+      <div class="page-title">
+        <h2>Insurance Policies Directory</h2>
+        <p>Browse, search, and monitor all active and historical insurance contracts</p>
+      </div>
+      <div>
+        <a href="/policies/new" class="btn btn-primary" id="btn-add-policy">➕ Add New Policy</a>
+      </div>
+    </div>
+
+    <!-- Filter & Search Toolbar -->
+    <div class="filter-bar">
+      <!-- Search & Date Range Filter (FR-06, FR-07, FR-08) -->
+      <form action="/policies" method="get" class="search-form" style="max-width: 100%; flex-wrap: wrap; gap: 0.75rem;">
+        <input type="text" name="search" value=""
+               placeholder="Search by policy number, customer name, or email..."
+               class="form-control" style="background-color: #fff; min-width: 250px; flex: 1;">
+
+        <div style="display: flex; align-items: center; gap: 0.4rem;">
+          <span style="font-size: 0.85rem; color: var(--color-slate-600); font-weight: 600;">Expiry:</span>
+          <input type="date" name="expiryFrom" value="" class="form-control" style="background-color: #fff; width: auto; font-size: 0.85rem;" title="Expiry Date From">
+          <span style="color: var(--color-slate-400);">&ndash;</span>
+          <input type="date" name="expiryTo" value="" class="form-control" style="background-color: #fff; width: auto; font-size: 0.85rem;" title="Expiry Date To">
+        </div>
+
+        
+        <button type="submit" class="btn btn-primary">Filter</button>
+        
+      </form>
+
+      <!-- Status Filter Chips (FR-08) -->
+      <div class="filter-chips">
+        <a href="/policies?search=&amp;expiryFrom=&amp;expiryTo="
+           class="filter-chip active">
+          All
+        </a>
+        <a href="/policies?status=ACTIVE&amp;search=&amp;expiryFrom=&amp;expiryTo="
+           class="filter-chip ">
+          Active
+        </a>
+        <a href="/policies?status=EXPIRING_SOON&amp;search=&amp;expiryFrom=&amp;expiryTo="
+           class="filter-chip ">
+          Expiring Soon
+        </a>
+        <a href="/policies?status=EXPIRED&amp;search=&amp;expiryFrom=&amp;expiryTo="
+           class="filter-chip ">
+          Expired
+        </a>
+        <a href="/policies?status=RENEWED&amp;search=&amp;expiryFrom=&amp;expiryTo="
+           class="filter-chip ">
+          Renewed
+        </a>
+      </div>
+    </div>
+
+    <!-- Policies Data Table -->
+    <div class="card">
+      <div class="card-header">
+        <h3>4 Policies Found</h3>
+      </div>
+      <div class="card-body" style="padding: 0;">
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Policy No</th>
+                <th>Customer (Relationship Tenure)</th>
+                <th>Email</th>
+                <th>Type</th>
+                <th>Coverage Period</th>
+                <th>Premium</th>
+                <th>Derived Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              
+              <tr>
+                <td>
+                  <span>
+                    <a href="/policies/1" style="font-weight: 700;">POL-1122</a>
+                  </span>
+                  
+                </td>
+                <td>
+                  <div style="font-weight: 600;">Basil SHaikh</div>
+                  <div style="margin-top: 0.15rem;">
+                    <span class="badge badge-tenure" style="font-size: 0.7rem; padding: 0.1rem 0.45rem;" 
+                          title="Customer Relationship Period (Historical)">⏳ 1 year, 10 months</span>
+                  </div>
+                </td>
+                <td>
+                  <span style="font-size: 0.85rem; color: var(--color-slate-500);">shaikhbasil739@gmail.com</span>
+                  
+                </td>
+                <td>
+                  <span class="tag-type">Health</span>
+                </td>
+                <td>
+                  <div style="font-size: 0.85rem; color: var(--color-slate-800);">2024-12-19 → 2026-10-17</div>
+                  <div style="margin-top: 0.15rem; display: flex; flex-wrap: wrap; gap: 0.25rem;">
+                    <span class="badge badge-duration" style="font-size: 0.7rem; padding: 0.1rem 0.45rem;">🛡️ 21 MONTHS (Derived Span)</span>
+                    <span class="badge" style="background: #fef3c7; color: #b45309; border: 1px solid #fde68a; font-size: 0.68rem; padding: 0.1rem 0.4rem;"
+                          title="Current coverage term dates span 21 months (668 days), but requested duration was not recorded. This policy has renewal history. The recorded Start Date (2024-12-19) reflects the original policy inception, while the Expiry Date (2026-10-17) reflects a subsequent renewal term. Review required: separate the current coverage term start date from the original customer inception date.">
+                      ⚠️ Review Needed
+                    </span>
+                  </div>
+                </td>
+                <td style="font-weight: 600;">₹ 74,736.95</td>
+                <td>
+                  <span class="badge badge-renewed">RENEWED</span>
+                </td>
+                <td>
+                  <div style="display: flex; gap: 0.4rem;">
+                    <a href="/policies/1" class="btn btn-outline btn-sm">View</a>
+                    <a href="/policies/1/edit" class="btn btn-outline btn-sm">Edit</a>
+                    
+                    <form action="/policies/1/delete" method="post" style="display:inline;"><input type="hidden" name="_csrf" value="XER3fuL4pc4TbdrLOLu9JRVZylyS9ddUynzBWrXr1P9akslybXFASYTKlKs-W-n_WZaJQXdt52WgweJ5-UzzbNaN5Ztvq_hL"/>
+                      <button type="submit" class="btn btn-outline btn-sm" style="color: #dc2626; border-color: #fecaca;"
+                              data-policy-number="POL-1122"
+                              onclick="return confirm('Are you sure you want to delete policy ' + this.getAttribute('data-policy-number') + '?');">Delete</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <span>
+                    <a href="/policies/2" style="font-weight: 700;">POL-232</a>
+                  </span>
+                  
+                </td>
+                <td>
+                  <div style="font-weight: 600;">sd</div>
+                  <div style="margin-top: 0.15rem;">
+                    <span class="badge badge-tenure" style="font-size: 0.7rem; padding: 0.1rem 0.45rem;" 
+                          title="Customer Relationship Period (Historical)">⏳ 3 days (&lt; 1 month)</span>
+                  </div>
+                </td>
+                <td>
+                  <span style="font-size: 0.85rem; color: var(--color-slate-500);">asdfg@gmail.com</span>
+                  
+                </td>
+                <td>
+                  <span class="tag-type">Health</span>
+                </td>
+                <td>
+                  <div style="font-size: 0.85rem; color: var(--color-slate-800);">2026-10-26 → 2026-11-07</div>
+                  <div style="margin-top: 0.15rem; display: flex; flex-wrap: wrap; gap: 0.25rem;">
+                    <span class="badge badge-duration" style="font-size: 0.7rem; padding: 0.1rem 0.45rem;">🛡️ Unspecified</span>
+                    <span class="badge" style="background: #fef3c7; color: #b45309; border: 1px solid #fde68a; font-size: 0.68rem; padding: 0.1rem 0.4rem;"
+                          title="Current coverage term dates span 0 months (13 days), but requested duration was not recorded. This policy has renewal history. The recorded Start Date (2026-10-26) reflects the original policy inception, while the Expiry Date (2026-11-07) reflects a subsequent renewal term. Review required: separate the current coverage term start date from the original customer inception date.">
+                      ⚠️ Review Needed
+                    </span>
+                  </div>
+                </td>
+                <td style="font-weight: 600;">₹ 5,200.00</td>
+                <td>
+                  <span class="badge badge-renewed">RENEWED</span>
+                </td>
+                <td>
+                  <div style="display: flex; gap: 0.4rem;">
+                    <a href="/policies/2" class="btn btn-outline btn-sm">View</a>
+                    <a href="/policies/2/edit" class="btn btn-outline btn-sm">Edit</a>
+                    
+                    <form action="/policies/2/delete" method="post" style="display:inline;"><input type="hidden" name="_csrf" value="XER3fuL4pc4TbdrLOLu9JRVZylyS9ddUynzBWrXr1P9akslybXFASYTKlKs-W-n_WZaJQXdt52WgweJ5-UzzbNaN5Ztvq_hL"/>
+                      <button type="submit" class="btn btn-outline btn-sm" style="color: #dc2626; border-color: #fecaca;"
+                              data-policy-number="POL-232"
+                              onclick="return confirm('Are you sure you want to delete policy ' + this.getAttribute('data-policy-number') + '?');">Delete</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <span>
+                    <a href="/policies/3" style="font-weight: 700;">POL-1121</a>
+                  </span>
+                  
+                </td>
+                <td>
+                  <div style="font-weight: 600;">sxdd</div>
+                  <div style="margin-top: 0.15rem;">
+                    <span class="badge badge-tenure" style="font-size: 0.7rem; padding: 0.1rem 0.45rem;" 
+                          title="Customer Relationship Period (Historical)">⏳ 2 days (&lt; 1 month)</span>
+                  </div>
+                </td>
+                <td>
+                  <span style="font-size: 0.85rem; color: var(--color-slate-500);">dhwuc@gmail.com</span>
+                  
+                </td>
+                <td>
+                  <span class="tag-type">Health</span>
+                </td>
+                <td>
+                  <div style="font-size: 0.85rem; color: var(--color-slate-800);">2026-10-27 → 2026-12-31</div>
+                  <div style="margin-top: 0.15rem; display: flex; flex-wrap: wrap; gap: 0.25rem;">
+                    <span class="badge badge-duration" style="font-size: 0.7rem; padding: 0.1rem 0.45rem;">🛡️ 2 MONTHS (Derived Span)</span>
+                    
+                  </div>
+                </td>
+                <td style="font-weight: 600;">₹ 3,887.33</td>
+                <td>
+                  <span class="badge badge-active">ACTIVE</span>
+                </td>
+                <td>
+                  <div style="display: flex; gap: 0.4rem;">
+                    <a href="/policies/3" class="btn btn-outline btn-sm">View</a>
+                    <a href="/policies/3/edit" class="btn btn-outline btn-sm">Edit</a>
+                    <form action="/policies/3/renew" method="post" style="display:inline;"><input type="hidden" name="_csrf" value="XER3fuL4pc4TbdrLOLu9JRVZylyS9ddUynzBWrXr1P9akslybXFASYTKlKs-W-n_WZaJQXdt52WgweJ5-UzzbNaN5Ztvq_hL"/>
+                      <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Confirm renewal of this policy?');">Renew</button>
+                    </form>
+                    <form action="/policies/3/delete" method="post" style="display:inline;"><input type="hidden" name="_csrf" value="XER3fuL4pc4TbdrLOLu9JRVZylyS9ddUynzBWrXr1P9akslybXFASYTKlKs-W-n_WZaJQXdt52WgweJ5-UzzbNaN5Ztvq_hL"/>
+                      <button type="submit" class="btn btn-outline btn-sm" style="color: #dc2626; border-color: #fecaca;"
+                              data-policy-number="POL-1121"
+                              onclick="return confirm('Are you sure you want to delete policy ' + this.getAttribute('data-policy-number') + '?');">Delete</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <span>
+                    <a href="/policies/34" style="font-weight: 700;">POL-1133</a>
+                  </span>
+                  
+                </td>
+                <td>
+                  <div style="font-weight: 600;">jawad shaikh</div>
+                  <div style="margin-top: 0.15rem;">
+                    <span class="badge badge-tenure" style="font-size: 0.7rem; padding: 0.1rem 0.45rem;" 
+                          title="Customer Relationship Period (Historical)">⏳ 28 days (&lt; 1 month)</span>
+                  </div>
+                </td>
+                <td>
+                  <span style="font-size: 0.85rem; color: var(--color-slate-500);">jawadshaikh@vit.edu.in</span>
+                  
+                </td>
+                <td>
+                  <span class="tag-type">Health</span>
+                </td>
+                <td>
+                  <div style="font-size: 0.85rem; color: var(--color-slate-800);">2026-10-01 → 2027-01-28</div>
+                  <div style="margin-top: 0.15rem; display: flex; flex-wrap: wrap; gap: 0.25rem;">
+                    <span class="badge badge-duration" style="font-size: 0.7rem; padding: 0.1rem 0.45rem;">🛡️ 3 MONTHS (Derived Span)</span>
+                    
+                  </div>
+                </td>
+                <td style="font-weight: 600;">₹ 30,000.00</td>
+                <td>
+                  <span class="badge badge-active">ACTIVE</span>
+                </td>
+                <td>
+                  <div style="display: flex; gap: 0.4rem;">
+                    <a href="/policies/34" class="btn btn-outline btn-sm">View</a>
+                    <a href="/policies/34/edit" class="btn btn-outline btn-sm">Edit</a>
+                    <form action="/policies/34/renew" method="post" style="display:inline;"><input type="hidden" name="_csrf" value="XER3fuL4pc4TbdrLOLu9JRVZylyS9ddUynzBWrXr1P9akslybXFASYTKlKs-W-n_WZaJQXdt52WgweJ5-UzzbNaN5Ztvq_hL"/>
+                      <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Confirm renewal of this policy?');">Renew</button>
+                    </form>
+                    <form action="/policies/34/delete" method="post" style="display:inline;"><input type="hidden" name="_csrf" value="XER3fuL4pc4TbdrLOLu9JRVZylyS9ddUynzBWrXr1P9akslybXFASYTKlKs-W-n_WZaJQXdt52WgweJ5-UzzbNaN5Ztvq_hL"/>
+                      <button type="submit" class="btn btn-outline btn-sm" style="color: #dc2626; border-color: #fecaca;"
+                              data-policy-number="POL-1133"
+                              onclick="return confirm('Are you sure you want to delete policy ' + this.getAttribute('data-policy-number') + '?');">Delete</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-content">
+      <div>
+        <strong>Jenkins-Based Policy Renewal Reminder System</strong> &bull; Final Year Engineering Project
+      </div>
+      <div>
+        Developed by <strong>Basil Shaikh</strong> (23102C0026 &bull; CMPN C)
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
+

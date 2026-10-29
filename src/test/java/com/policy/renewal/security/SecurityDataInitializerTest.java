@@ -90,7 +90,8 @@ class SecurityDataInitializerTest {
         when(userRepository.existsByRole(Role.ADMIN)).thenReturn(true); // admin already exists
         ReflectionTestUtils.setField(initializer, "initialStaffUsername", "stafftester");
         ReflectionTestUtils.setField(initializer, "initialStaffPassword", "StaffSecret@123");
-        when(userRepository.existsByUsername("stafftester")).thenReturn(false);
+        when(userRepository.existsByUsernameIgnoreCase("stafftester")).thenReturn(false);
+        when(userRepository.existsByRole(Role.STAFF)).thenReturn(false);
 
         initializer.run();
 
@@ -109,7 +110,7 @@ class SecurityDataInitializerTest {
         when(userRepository.existsByRole(Role.ADMIN)).thenReturn(true);
         ReflectionTestUtils.setField(initializer, "initialStaffUsername", "stafftester");
         ReflectionTestUtils.setField(initializer, "initialStaffPassword", "StaffSecret@123");
-        when(userRepository.existsByUsername("stafftester")).thenReturn(true);
+        when(userRepository.existsByUsernameIgnoreCase("stafftester")).thenReturn(true);
 
         initializer.run();
 
